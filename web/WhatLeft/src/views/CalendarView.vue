@@ -16,19 +16,19 @@
     <v-row class="mb-6">
       <!-- Left: Tasks Cards -->
       <v-col cols="12" md="3">
-        <div class="d-flex flex-column gap-3">
+        <div class="d-flex flex-column gap-3 task-list-container">
           <div v-if="tasksStore.tasks.length === 0" class="text-center text-medium-emphasis pa-8">
             <p class="text-body-2">Aucune tâche</p>
             <p class="text-caption">Créez une tâche à partir de la page des tâches</p>
           </div>
-          
+          <!-- @dragstart="handleDragStart($event, task)"
+            @dragend="handleDragEnd" -->
           <v-card
             v-for="task in tasksStore.tasks"
             :key="task.id"
-            draggable="true"
-            @dragstart="handleDragStart($event, task)"
-            @dragend="handleDragEnd"
-            class="draggable-task"
+            class="draggable-task fc-event"
+            :data-event-id="task.id"
+            :data-duration="task.duration"
             :style="{ 
               minHeight: `${task.duration >= 4 ? 100 : 80}px`,
               background: getTaskBackground(task)
@@ -44,6 +44,11 @@
                 <span class="text-caption text-white font-weight-bold flex-shrink-0">
                   {{ task.duration }}h
                 </span>
+              </div>
+              
+              <!-- Time info -->
+              <div class="text-caption text-white-50 mt-1">
+                <p class="mb-0">{{ getTaskTimeRange(task) }}</p>
               </div>
               
               <!-- Tags Row -->
@@ -117,10 +122,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted, nextTick } from 'vue'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import { Draggable } from '@fullcalendar/interaction'
 import VueCalendar from '@fullcalendar/vue3'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -144,7 +150,7 @@ const selectedEvent = reactive<SelectedEvent>({
 
 const calendarOptions = {
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: 'dayGridMonth',
+  initialView: 'timeGridDay',
   editable: true,
   droppable: true,
   headerToolbar: {
@@ -154,8 +160,22 @@ const calendarOptions = {
     },
   locale: 'fr',
   firstDay: 1,
-  height: 'auto',
-  eventDisplay: 'block'
+  drop: (info: any) => {
+    // Handle drop from external elements
+    console.log('Event dropped:', info)
+  },
+  eventReceive: (info: any) => {
+    // Handle event received from external drag
+    // The ID is stored in the element's data attribute
+    const draggedEl = info.draggedEl
+    const taskId = draggedEl?.getAttribute('data-event-id')
+    const newDate = info.event.start?.toISOString().split('T')[0]
+    
+    if (taskId && newDate) {
+      tasksStore.updateTask(taskId, { createdAt: newDate })
+      console.log(`Tâche ${taskId} déplacée au ${newDate}`)
+    }
+  }
 }
 
 const calendarEvents = computed(() => {
@@ -174,7 +194,7 @@ const calendarEvents = computed(() => {
 const handleEventDrop = async (info: any) => {
   const taskId = info.event.id
   const newDate = info.event.start.toISOString().slice(0, 10)
-
+  console.log("on drop");
   try {
     await tasksStore.updateTask(taskId, { createdAt: newDate })
   } catch (error) {
@@ -265,23 +285,39 @@ const getTaskBackground = (task: any) => {
   }
 }
 
-const handleDragStart = (event: DragEvent, task: any) => {
-  if (event.dataTransfer) {
-    event.dataTransfer.effectAllowed = 'move'
-    event.dataTransfer.setData('application/json', JSON.stringify({
-      id: task.id,
-      title: task.title,
-      duration: 3600000 // 1 hour in milliseconds
-    }))
-    event.dataTransfer.setData('text/plain', task.title)
+const getTaskTimeRange = (task: any) => {
+  if (!task.createdAt) return ''
+  
+  const startTime = new Date(task.createdAt)
+  const endTime = new Date(startTime.getTime() + task.duration * 60 * 60 * 1000)
+  
+  const start = startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const end = endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  
+  return `${start} - ${end}`
+}
+
+// Drag & drop is now handled by FullCalendar's Draggable
+
+onMounted(async () => {
+  // Wait for DOM to be ready
+  await nextTick()
+  
+  // Initialize Draggable for external events
+  const containerEl = document.querySelector('.task-list-container')
+  if (containerEl) {
+    new Draggable(containerEl, {
+      itemSelector: '.fc-event',
+      eventData: function(eventEl: HTMLElement) {
+        return {
+          title: eventEl.textContent?.split('\n')[0] || 'Tâche',
+          duration: parseInt(eventEl.getAttribute('data-duration') || '1')
+        }
+      }
+    })
   }
-}
 
-const handleDragEnd = () => {
-  // Optional: handle drag end state if needed
-}
-
-onMounted(() => {
+  // Initialize calendar
   setTimeout(() => {
     if (calendarRef.value) {
       calendarRef.value.getApi().render()
