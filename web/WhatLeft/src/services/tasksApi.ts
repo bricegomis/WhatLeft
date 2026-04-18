@@ -16,13 +16,13 @@ export class TasksApiService {
     return response.json()
   }
 
-  static async createTask(title: string): Promise<Task> {
+  static async createTask(data: { title: string; duration: number; finishAt: string | null }): Promise<Task> {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
       },
-      body: JSON.stringify({ title })
+      body: JSON.stringify(data)
     })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)

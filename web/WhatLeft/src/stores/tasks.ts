@@ -4,8 +4,9 @@ import { TasksApiService } from '../services/tasksApi'
 export interface Task {
   id: string
   title: string
-  completed: boolean
   createdAt: string
+  duration: number
+  finishAt: string | null
 }
 
 export const useTasksStore = defineStore('tasks', {
@@ -17,8 +18,8 @@ export const useTasksStore = defineStore('tasks', {
   }),
 
   getters: {
-    completedTasks: (state) => state.tasks.filter(task => task.completed),
-    pendingTasks: (state) => state.tasks.filter(task => !task.completed),
+    finishedTasks: (state) => state.tasks.filter(task => Boolean(task.finishAt)),
+    pendingTasks: (state) => state.tasks.filter(task => !task.finishAt),
     isLoading: (state) => state.loading,
     hasError: (state) => state.error !== null,
     isApiAvailable: (state) => state.apiAvailable
@@ -58,13 +59,17 @@ export const useTasksStore = defineStore('tasks', {
       }
     },
 
-    async addTask(title: string) {
+    async addTask(title: string, duration = 1, finishAt: string | null = null) {
       if (!title.trim()) return
 
       this.loading = true
       this.error = null
       try {
-        const newTask = await TasksApiService.createTask(title.trim())
+        const newTask = await TasksApiService.createTask({
+          title: title.trim(),
+          duration,
+          finishAt
+        })
         this.tasks.unshift(newTask)
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Erreur lors de la création de la tâche'
@@ -74,23 +79,21 @@ export const useTasksStore = defineStore('tasks', {
       }
     },
 
-    async toggleComplete(id: string) {
+    async toggleFinish(id: string) {
       const task = this.tasks.find((item) => item.id === id)
       if (!task) return
 
-      const newCompleted = !task.completed
-      const originalCompleted = task.completed
+      const newFinishAt = task.finishAt ? null : new Date().toISOString().slice(0, 10)
+      const originalFinishAt = task.finishAt
 
-      // Optimistic update
-      task.completed = newCompleted
+      task.finishAt = newFinishAt
 
       try {
-        await TasksApiService.updateTask(id, { completed: newCompleted })
+        await TasksApiService.updateTask(id, { finishAt: newFinishAt })
       } catch (error) {
-        // Revert on error
-        task.completed = originalCompleted
+        task.finishAt = originalFinishAt
         this.error = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la tâche'
-        console.error('Erreur dans toggleComplete:', error)
+        console.error('Erreur dans toggleFinish:', error)
       }
     },
 
@@ -100,15 +103,12 @@ export const useTasksStore = defineStore('tasks', {
 
       const originalTask = { ...task }
 
-      // Optimistic update
       Object.assign(task, updates)
 
       try {
         const updatedTask = await TasksApiService.updateTask(id, updates)
-        // Replace with server response
         Object.assign(task, updatedTask)
       } catch (error) {
-        // Revert on error
         Object.assign(task, originalTask)
         this.error = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la tâche'
         console.error('Erreur dans updateTask:', error)
@@ -121,13 +121,11 @@ export const useTasksStore = defineStore('tasks', {
 
       const removedTask = this.tasks[taskIndex]
 
-      // Optimistic update
       this.tasks.splice(taskIndex, 1)
 
       try {
         await TasksApiService.deleteTask(id)
       } catch (error) {
-        // Revert on error
         this.tasks.splice(taskIndex, 0, removedTask)
         this.error = error instanceof Error ? error.message : 'Erreur lors de la suppression de la tâche'
         console.error('Erreur dans removeTask:', error)

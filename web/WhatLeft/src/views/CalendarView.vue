@@ -17,7 +17,6 @@
       />
     </section>
 
-    <!-- Modal pour modifier la tâche -->
     <div v-if="selectedEvent" class="modal-overlay" @click.self="closeEventModal">
       <div class="modal">
         <div class="modal-header">
@@ -27,19 +26,17 @@
 
         <div class="form-group">
           <label for="event-title">Titre</label>
-          <input id="event-title" v-model="selectedEvent!.title" />
+          <input id="event-title" v-model="selectedEvent.title" />
         </div>
 
         <div class="form-group">
           <label for="event-date">Date</label>
-          <input id="event-date" type="date" v-model="selectedEvent!.start" />
+          <input id="event-date" type="date" v-model="selectedEvent.start" />
         </div>
 
         <div class="form-group">
-          <label>
-            <input type="checkbox" v-model="selectedEvent!.completed" />
-            Terminée
-          </label>
+          <label for="event-finish-at">Terminé le</label>
+          <input id="event-finish-at" type="date" v-model="selectedEvent.finishAt" />
         </div>
 
         <div class="modal-actions">
@@ -63,7 +60,7 @@ interface SelectedEvent {
   id: string
   title: string
   start: string
-  completed: boolean
+  finishAt: string
 }
 
 const tasksStore = useTasksStore()
@@ -81,7 +78,7 @@ const calendarOptions = {
     right: 'dayGridMonth,dayGridWeek'
   },
   locale: 'fr',
-  firstDay: 1, // Lundi
+  firstDay: 1,
   height: 'auto',
   eventDisplay: 'block',
   eventColor: '#4f46e5',
@@ -94,9 +91,9 @@ const calendarEvents = computed(() => {
     title: task.title,
     start: task.createdAt,
     extendedProps: {
-      completed: task.completed
+      finishAt: task.finishAt
     },
-    backgroundColor: task.completed ? '#16a34a' : '#4f46e5'
+    backgroundColor: task.finishAt ? '#16a34a' : '#4f46e5'
   }))
 })
 
@@ -107,7 +104,6 @@ const handleEventDrop = async (info: any) => {
   try {
     await tasksStore.updateTask(taskId, { createdAt: newDate })
   } catch (error) {
-    // Revert the drag operation on error
     info.revert()
     console.error('Erreur lors du déplacement de la tâche:', error)
   }
@@ -120,7 +116,7 @@ const handleEventClick = (info: any) => {
       id: task.id,
       title: task.title,
       start: task.createdAt,
-      completed: task.completed
+      finishAt: task.finishAt || ''
     }
   }
 }
@@ -135,7 +131,7 @@ const updateEvent = async () => {
       await tasksStore.updateTask(selectedEvent.value.id, {
         title: selectedEvent.value.title,
         createdAt: selectedEvent.value.start,
-        completed: selectedEvent.value.completed
+        finishAt: selectedEvent.value.finishAt || null
       })
       closeEventModal()
     } catch (error) {
@@ -145,14 +141,12 @@ const updateEvent = async () => {
 }
 
 onMounted(() => {
-  // Force le rafraîchissement du calendrier après le montage
   setTimeout(() => {
     if (calendarRef.value) {
       calendarRef.value.getApi().render()
     }
   }, 100)
 
-  // Charger les tâches si elles ne sont pas déjà chargées
   if (tasksStore.tasks.length === 0) {
     tasksStore.fetchTasks()
   }

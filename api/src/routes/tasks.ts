@@ -27,7 +27,7 @@ router.get('/', async (_req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { title } = req.body
+    const { title, duration, finishAt } = req.body
     if (!title || typeof title !== 'string') {
       return res.status(400).json({ error: 'Le titre est requis' })
     }
@@ -36,8 +36,9 @@ router.post('/', async (req, res) => {
     const newTask: Task = {
       id: crypto.randomUUID(),
       title: title.trim(),
-      completed: false,
-      createdAt: new Date().toISOString().slice(0, 10)
+      createdAt: new Date().toISOString().slice(0, 10),
+      duration: typeof duration === 'number' && duration > 0 ? duration : 1,
+      finishAt: typeof finishAt === 'string' ? finishAt : null
     }
 
     tasks.unshift(newTask)
@@ -62,8 +63,9 @@ router.patch('/:id', async (req, res) => {
     }
 
     task.title = typeof updates.title === 'string' ? updates.title : task.title
-    task.completed = typeof updates.completed === 'boolean' ? updates.completed : task.completed
     task.createdAt = typeof updates.createdAt === 'string' ? updates.createdAt : task.createdAt
+    task.duration = typeof updates.duration === 'number' && updates.duration > 0 ? updates.duration : task.duration
+    task.finishAt = updates.finishAt === null || typeof updates.finishAt === 'string' ? updates.finishAt : task.finishAt
 
     await saveTasks(tasks)
     res.json(task)

@@ -1,20 +1,30 @@
 [
   {
+    "id": "a7d1e3eb-34d5-4002-94b7-f4851488ce1b",
+    "title": "tedt",
+    "createdAt": "2026-04-18",
+    "duration": 1.5,
+    "finishAt": null
+  },
+  {
     "id": "1",
     "title": "Préparer le rapport hebdo",
-    "completed": false,
-    "createdAt": "2026-04-18"
+    "createdAt": "2026-04-18",
+    "duration": 2,
+    "finishAt": null
   },
   {
     "id": "2",
     "title": "Relire les demandes clients",
-    "completed": true,
-    "createdAt": "2026-04-17"
+    "createdAt": "2026-04-17",
+    "duration": 1.25,
+    "finishAt": "2026-04-17"
   },
   {
     "id": "3",
     "title": "Planifier la réunion produit",
-    "completed": false,
-    "createdAt": "2026-04-20"
+    "createdAt": "2026-04-20",
+    "duration": 0.75,
+    "finishAt": null
   }
 ]

@@ -3,69 +3,61 @@
     <section class="page-header">
       <div>
         <h1>Liste des tâches</h1>
-        <p>Suivre et terminer les tâches en cours.</p>
+        <p>Suivre, planifier et terminer les tâches avec un modèle plus riche.</p>
       </div>
       <button class="primary" @click="openModal" :disabled="isLoading">Nouvelle tâche</button>
     </section>
 
-    <!-- Message d'erreur -->
     <div v-if="hasError" class="error-message">
       <p>{{ error }}</p>
       <button @click="retryLoad">Réessayer</button>
       <button @click="clearError">Fermer</button>
     </div>
 
-    <!-- Vérification API -->
     <div v-if="!isApiAvailable" class="error-message">
       <p>Le backend de l'API n'est pas disponible. Démarre le serveur dans le dossier `api/`.</p>
     </div>
 
-    <!-- État de chargement -->
     <div v-else-if="isLoading && tasks.length === 0" class="loading-state">
       <p>Chargement des tâches...</p>
     </div>
 
-    <!-- Liste des tâches -->
     <section v-else-if="tasks.length > 0" class="panel">
       <h2>Tâches ({{ tasks.length }})</h2>
       <table class="table task-list">
         <thead>
           <tr>
             <th>Tâche</th>
-            <th>Date</th>
-            <th>État</th>
+            <th>Créé le</th>
+            <th>Durée</th>
+            <th>Terminé le</th>
+            <th>Statut</th>
             <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          <tr v-for="task in tasks" :key="task.id" :class="{ completed: task.completed }">
+          <tr v-for="task in tasks" :key="task.id" :class="{ completed: !!task.finishAt }">
             <td>
               <label class="task-row">
                 <input
                   type="checkbox"
                   class="task-checkbox"
-                  :checked="task.completed"
-                  @change="toggleComplete(task.id)"
+                  :checked="!!task.finishAt"
+                  @change="toggleFinish(task.id)"
                   :disabled="isLoading"
                 />
                 <span>{{ task.title }}</span>
               </label>
             </td>
             <td>{{ task.createdAt }}</td>
-            <td>{{ task.completed ? 'Terminée' : 'En cours' }}</td>
+            <td>{{ task.duration }} h</td>
+            <td>{{ task.finishAt || '—' }}</td>
+            <td>{{ task.finishAt ? 'Terminée' : 'En cours' }}</td>
             <td>
-              <button
-                class="secondary"
-                @click="toggleComplete(task.id)"
-                :disabled="isLoading"
-              >
-                {{ task.completed ? 'Reprendre' : 'Terminer' }}
+              <button class="secondary" @click="toggleFinish(task.id)" :disabled="isLoading">
+                {{ task.finishAt ? 'Reprendre' : 'Terminer' }}
               </button>
-              <button
-                class="danger"
-                @click="removeTask(task.id)"
-                :disabled="isLoading"
-              >
+              <button class="danger" @click="removeTask(task.id)" :disabled="isLoading">
                 Supprimer
               </button>
             </td>
@@ -74,14 +66,12 @@
       </table>
     </section>
 
-    <!-- État vide -->
     <section v-else class="panel empty-state">
       <h2>Aucune tâche</h2>
       <p>Il n'y a pas encore de tâches. Créez votre première tâche !</p>
       <button class="primary" @click="openModal" :disabled="isLoading">Créer une tâche</button>
     </section>
 
-    <!-- Modal pour créer une tâche -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-header">
@@ -99,13 +89,31 @@
           />
         </div>
 
+        <div class="form-group">
+          <label for="task-duration">Durée (heures)</label>
+          <input
+            id="task-duration"
+            type="number"
+            min="0.5"
+            step="0.5"
+            v-model.number="newTaskDuration"
+            :disabled="isCreating"
+          />
+        </div>
+
+        <div class="form-group">
+          <label for="task-finish-at">Terminé le (optionnel)</label>
+          <input
+            id="task-finish-at"
+            type="date"
+            v-model="newTaskFinishAt"
+            :disabled="isCreating"
+          />
+        </div>
+
         <div class="modal-actions">
           <button class="secondary" @click="closeModal" :disabled="isCreating">Annuler</button>
-          <button
-            class="primary"
-            @click="createTask"
-            :disabled="!newTaskTitle.trim() || isCreating"
-          >
+          <button class="primary" @click="createTask" :disabled="!newTaskTitle.trim() || isCreating">
             {{ isCreating ? 'Création...' : 'Créer' }}
           </button>
         </div>
@@ -125,16 +133,22 @@ const { tasks, isLoading, hasError, error, isApiAvailable } = storeToRefs(tasksS
 
 const isModalOpen = ref(false)
 const newTaskTitle = ref('')
+const newTaskDuration = ref(1)
+const newTaskFinishAt = ref('')
 const isCreating = ref(false)
 
 const openModal = () => {
   newTaskTitle.value = ''
+  newTaskDuration.value = 1
+  newTaskFinishAt.value = ''
   isModalOpen.value = true
 }
 
 const closeModal = () => {
   isModalOpen.value = false
   newTaskTitle.value = ''
+  newTaskDuration.value = 1
+  newTaskFinishAt.value = ''
 }
 
 const createTask = async () => {
@@ -142,7 +156,11 @@ const createTask = async () => {
 
   isCreating.value = true
   try {
-    await tasksStore.addTask(newTaskTitle.value)
+    await tasksStore.addTask(
+      newTaskTitle.value,
+      newTaskDuration.value,
+      newTaskFinishAt.value || null
+    )
     closeModal()
   } catch (error) {
     console.error('Erreur lors de la création:', error)
@@ -151,8 +169,8 @@ const createTask = async () => {
   }
 }
 
-const toggleComplete = async (id: string) => {
-  await tasksStore.toggleComplete(id)
+const toggleFinish = async (id: string) => {
+  await tasksStore.toggleFinish(id)
 }
 
 const removeTask = async (id: string) => {
