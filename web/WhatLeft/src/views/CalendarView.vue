@@ -309,9 +309,33 @@ onMounted(async () => {
     new Draggable(containerEl, {
       itemSelector: '.fc-event',
       eventData: function(eventEl: HTMLElement) {
+        // Get the task ID from the element or its parent
+        let element = eventEl
+        let taskId = element.getAttribute('data-event-id')
+        
+        // If not found, search in parent elements
+        if (!taskId) {
+          element = eventEl.closest('[data-event-id]') as HTMLElement
+          if (element) {
+            taskId = element.getAttribute('data-event-id')
+          }
+        }
+        
+        // Find the task in the store to get its duration
+        let durationHours = 1
+        if (taskId) {
+          const task = tasksStore.tasks.find(t => t.id === taskId)
+          if (task) {
+            durationHours = task.duration
+          }
+        }
+        
+        // Extract title (first line of text)
+        const title = eventEl.textContent?.split('\n')[0]?.trim() || 'Tâche'
+        
         return {
-          title: eventEl.textContent?.split('\n')[0] || 'Tâche',
-          duration: parseInt(eventEl.getAttribute('data-duration') || '1')
+          title: title,
+          duration: `PT${durationHours}H` // ISO 8601 format
         }
       }
     })
