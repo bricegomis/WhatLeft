@@ -8,7 +8,7 @@ const PORT = process.env.PORT ? Number(process.env.PORT) : 3000
 app.use(cors())
 app.use(express.json())
 
-app.use('/api/tasks', tasksRouter)
+app.use('/tasks', tasksRouter)
 
 app.get('/', (_req, res) => {
   res.json({ status: 'ok', message: 'WhatLeft API backend is running' })

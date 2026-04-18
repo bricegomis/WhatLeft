@@ -1,10 +1,10 @@
 import type { Task } from '../stores/tasks'
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
 export class TasksApiService {
   static async checkHealth(): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}/`)
+    const response = await fetch(`${API_BASE_URL}`)
     return response.ok
   }
 
