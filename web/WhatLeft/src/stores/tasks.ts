@@ -12,7 +12,9 @@ export const useTasksStore = defineStore('tasks', {
     tasks: [
       { id: '1', title: 'Préparer le rapport hebdo', completed: false, createdAt: '2026-04-18' },
       { id: '2', title: 'Relire les demandes clients', completed: true, createdAt: '2026-04-17' },
-      { id: '3', title: 'Planifier la réunion produit', completed: false, createdAt: '2026-04-18' }
+      { id: '3', title: 'Planifier la réunion produit', completed: false, createdAt: '2026-04-20' },
+      { id: '4', title: 'Mettre à jour la documentation', completed: false, createdAt: '2026-04-22' },
+      { id: '5', title: 'Réunion équipe', completed: false, createdAt: '2026-04-25' }
     ] as Task[]
   }),
   actions: {

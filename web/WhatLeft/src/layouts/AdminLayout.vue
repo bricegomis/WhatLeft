@@ -5,6 +5,7 @@
       <nav>
         <RouterLink to="/" class="nav-link" active-class="active">Tableau de bord</RouterLink>
         <RouterLink to="/tasks" class="nav-link" active-class="active">Tâches</RouterLink>
+        <RouterLink to="/calendar" class="nav-link" active-class="active">Calendrier</RouterLink>
         <RouterLink to="/users" class="nav-link" active-class="active">Utilisateurs</RouterLink>
         <RouterLink to="/settings" class="nav-link" active-class="active">Paramètres</RouterLink>
       </nav>
