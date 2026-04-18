@@ -1,124 +1,194 @@
 <template>
   <AdminLayout>
-    <section class="page-header">
-      <div>
-        <h1>Liste des tâches</h1>
-        <p>Suivre, planifier et terminer les tâches avec un modèle plus riche.</p>
-      </div>
-      <button class="primary" @click="openModal" :disabled="isLoading">Nouvelle tâche</button>
-    </section>
-
-    <div v-if="hasError" class="error-message">
-      <p>{{ error }}</p>
-      <button @click="retryLoad">Réessayer</button>
-      <button @click="clearError">Fermer</button>
-    </div>
-
-    <div v-if="!isApiAvailable" class="error-message">
-      <p>Le backend de l'API n'est pas disponible. Démarre le serveur dans le dossier `api/`.</p>
-    </div>
-
-    <div v-else-if="isLoading && tasks.length === 0" class="loading-state">
-      <p>Chargement des tâches...</p>
-    </div>
-
-    <section v-else-if="tasks.length > 0" class="panel">
-      <h2>Tâches ({{ tasks.length }})</h2>
-      <table class="table task-list">
-        <thead>
-          <tr>
-            <th>Tâche</th>
-            <th>Créé le</th>
-            <th>Durée</th>
-            <th>Terminé le</th>
-            <th>Statut</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr v-for="task in tasks" :key="task.id" :class="{ completed: !!task.finishAt }">
-            <td>
-              <label class="task-row">
-                <input
-                  type="checkbox"
-                  class="task-checkbox"
-                  :checked="!!task.finishAt"
-                  @change="toggleFinish(task.id)"
-                  :disabled="isLoading"
-                />
-                <span>{{ task.title }}</span>
-              </label>
-            </td>
-            <td>{{ task.createdAt }}</td>
-            <td>{{ task.duration }} h</td>
-            <td>{{ task.finishAt || '—' }}</td>
-            <td>{{ task.finishAt ? 'Terminée' : 'En cours' }}</td>
-            <td>
-              <button class="secondary" @click="toggleFinish(task.id)" :disabled="isLoading">
-                {{ task.finishAt ? 'Reprendre' : 'Terminer' }}
-              </button>
-              <button class="danger" @click="removeTask(task.id)" :disabled="isLoading">
-                Supprimer
-              </button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
-    </section>
-
-    <section v-else class="panel empty-state">
-      <h2>Aucune tâche</h2>
-      <p>Il n'y a pas encore de tâches. Créez votre première tâche !</p>
-      <button class="primary" @click="openModal" :disabled="isLoading">Créer une tâche</button>
-    </section>
-
-    <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
-      <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div class="modal-header">
-          <h2 id="modal-title">Ajouter une tâche</h2>
-          <button class="close-button" @click="closeModal">×</button>
+    <!-- Page Header -->
+    <v-row class="mb-6">
+      <v-col cols="12">
+        <div class="d-flex justify-space-between align-center">
+          <div>
+            <h1 class="text-h4 font-weight-bold mb-2">Liste des tâches</h1>
+            <p class="text-body-1 text-medium-emphasis mb-0">
+              Suivre, planifier et terminer les tâches.
+            </p>
+          </div>
+          <v-btn
+            color="primary"
+            prepend-icon="mdi-plus"
+            @click="openModal"
+            :disabled="isLoading"
+          >
+            Nouvelle tâche
+          </v-btn>
         </div>
+      </v-col>
+    </v-row>
 
-        <div class="form-group">
-          <label for="task-title">Titre de la tâche</label>
-          <input
-            id="task-title"
+    <!-- Error Messages -->
+    <v-alert
+      v-if="hasError"
+      type="error"
+      class="mb-6"
+      dismissible
+      @click:close="clearError"
+    >
+      {{ error }}
+      <v-btn size="small" variant="text" @click="retryLoad" class="ms-2">
+        Réessayer
+      </v-btn>
+    </v-alert>
+
+    <v-alert
+      v-if="!isApiAvailable"
+      type="error"
+      class="mb-6"
+    >
+      Le backend de l'API n'est pas disponible. Démarrez le serveur dans le dossier <code>api/</code>.
+    </v-alert>
+
+    <!-- Loading State -->
+    <div v-if="isLoading && tasks.length === 0" class="text-center pa-12">
+      <v-progress-circular indeterminate color="primary" class="mb-4" />
+      <p class="text-body-1">Chargement des tâches...</p>
+    </div>
+
+    <!-- Tasks Table -->
+    <v-card v-else-if="tasks.length > 0" class="mb-6">
+      <v-data-table
+        :headers="tableHeaders"
+        :items="tasks"
+        :loading="isLoading"
+        item-key="id"
+      >
+        <template #item.title="{ item }">
+          <div class="d-flex align-center gap-2">
+            <v-checkbox
+              :checked="!!item.finishAt"
+              @change="toggleFinish(item.id)"
+              hide-details
+              :disabled="isLoading"
+            />
+            <span :class="{ 'text-decoration-line-through': item.finishAt }">
+              {{ item.title }}
+            </span>
+          </div>
+        </template>
+
+        <template #item.createdAt="{ item }">
+          {{ formatDate(item.createdAt) }}
+        </template>
+
+        <template #item.finishAt="{ item }">
+          {{ item.finishAt ? formatDate(item.finishAt) : '—' }}
+        </template>
+
+        <template #item.status="{ item }">
+          <v-chip
+            :color="item.finishAt ? 'success' : 'warning'"
+            size="small"
+            variant="flat"
+          >
+            {{ item.finishAt ? 'Terminée' : 'En cours' }}
+          </v-chip>
+        </template>
+
+        <template #item.actions="{ item }">
+          <v-btn
+            v-if="!item.finishAt"
+            size="small"
+            variant="outlined"
+            color="success"
+            @click="toggleFinish(item.id)"
+            :disabled="isLoading"
+            class="me-2"
+          >
+            Terminer
+          </v-btn>
+          <v-btn
+            v-else
+            size="small"
+            variant="outlined"
+            color="primary"
+            @click="toggleFinish(item.id)"
+            :disabled="isLoading"
+            class="me-2"
+          >
+            Reprendre
+          </v-btn>
+          <v-btn
+            size="small"
+            variant="outlined"
+            color="error"
+            @click="removeTask(item.id)"
+            :disabled="isLoading"
+            icon="mdi-delete"
+          />
+        </template>
+      </v-data-table>
+    </v-card>
+
+    <!-- Empty State -->
+    <v-card v-else class="text-center pa-12">
+      <v-icon color="primary" size="64" class="mb-4">mdi-checkbox-marked-outline</v-icon>
+      <h2 class="text-h6 mb-2">Aucune tâche</h2>
+      <p class="text-body-2 text-medium-emphasis mb-6">
+        Il n'y a pas encore de tâches. Créez votre première tâche !
+      </p>
+      <v-btn
+        color="primary"
+        prepend-icon="mdi-plus"
+        @click="openModal"
+        :disabled="isLoading"
+      >
+        Créer une tâche
+      </v-btn>
+    </v-card>
+
+    <!-- Create Task Dialog -->
+    <v-dialog v-model="isModalOpen" max-width="500">
+      <v-card>
+        <v-card-title>Ajouter une tâche</v-card-title>
+        <v-card-text>
+          <v-text-field
             v-model="newTaskTitle"
+            label="Titre de la tâche"
             placeholder="Par exemple : Envoyer le rapport"
             :disabled="isCreating"
+            required
+            class="mb-4"
           />
-        </div>
 
-        <div class="form-group">
-          <label for="task-duration">Durée (heures)</label>
-          <input
-            id="task-duration"
+          <v-text-field
+            v-model.number="newTaskDuration"
+            label="Durée (heures)"
             type="number"
             min="0.5"
             step="0.5"
-            v-model.number="newTaskDuration"
             :disabled="isCreating"
+            class="mb-4"
           />
-        </div>
 
-        <div class="form-group">
-          <label for="task-finish-at">Terminé le (optionnel)</label>
-          <input
-            id="task-finish-at"
-            type="date"
+          <v-text-field
             v-model="newTaskFinishAt"
+            label="Terminé le (optionnel)"
+            type="date"
             :disabled="isCreating"
           />
-        </div>
-
-        <div class="modal-actions">
-          <button class="secondary" @click="closeModal" :disabled="isCreating">Annuler</button>
-          <button class="primary" @click="createTask" :disabled="!newTaskTitle.trim() || isCreating">
-            {{ isCreating ? 'Création...' : 'Créer' }}
-          </button>
-        </div>
-      </div>
-    </div>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="closeModal" :disabled="isCreating">
+            Annuler
+          </v-btn>
+          <v-btn
+            color="primary"
+            @click="createTask"
+            :disabled="!newTaskTitle.trim() || isCreating"
+            :loading="isCreating"
+          >
+            Créer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </AdminLayout>
 </template>
 
@@ -136,6 +206,23 @@ const newTaskTitle = ref('')
 const newTaskDuration = ref(1)
 const newTaskFinishAt = ref('')
 const isCreating = ref(false)
+
+const tableHeaders = [
+  { title: 'Tâche', key: 'title', width: '40%' },
+  { title: 'Créé le', key: 'createdAt', width: '20%' },
+  { title: 'Terminé le', key: 'finishAt', width: '20%' },
+  { title: 'Statut', key: 'status', width: '10%' },
+  { title: 'Actions', key: 'actions', width: '10%', sortable: false }
+]
+
+const formatDate = (dateString: string) => {
+  const date = new Date(dateString)
+  return date.toLocaleDateString('fr-FR', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
+  })
+}
 
 const openModal = () => {
   newTaskTitle.value = ''
