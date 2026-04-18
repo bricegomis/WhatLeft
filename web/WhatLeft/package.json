@@ -13,9 +13,11 @@
     "@fullcalendar/daygrid": "^6.1.15",
     "@fullcalendar/interaction": "^6.1.15",
     "@fullcalendar/vue3": "^6.1.15",
+    "@mdi/font": "^7.4.47",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",
-    "vue-router": "^4.3.2"
+    "vue-router": "^4.3.2",
+    "vuetify": "^3.12.5"
   },
   "devDependencies": {
     "@types/node": "^24.12.2",

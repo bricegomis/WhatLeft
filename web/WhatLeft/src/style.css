@@ -1,236 +1,52 @@
+/* Styles personnalisés pour l'application - ne pas écraser Vuetify */
+
+/* Variables CSS pour les couleurs personnalisées si nécessaire */
 :root {
-  --bg: #f5f7fb;
-  --bg-surface: #ffffff;
-  --text: #2d3a4b;
-  --text-muted: #6b7280;
-  --border: #d8e0ea;
-  --primary: #4f46e5;
-  --primary-soft: rgba(79, 70, 229, 0.12);
-  --success: #16a34a;
-  --danger: #dc2626;
-  --shadow: 0 18px 40px rgba(15, 23, 42, 0.08);
-  --radius: 18px;
-  font-family: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  color: var(--text);
-  background: var(--bg);
+  --custom-primary: #4f46e5;
+  --custom-success: #16a34a;
+  --custom-danger: #dc2626;
 }
 
-* {
-  box-sizing: border-box;
+/* Styles spécifiques aux composants personnalisés seulement */
+/* Éviter les styles globaux qui cassent Vuetify */
+
+/* Animations et transitions personnalisées */
+.v-card {
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 
-html,
-body,
-#app {
-  min-height: 100%;
+.v-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
 }
 
-body {
-  margin: 0;
-  background: var(--bg);
-}
-
-a {
-  color: inherit;
-  text-decoration: none;
-}
-
-button,
-input,
-select {
-  font: inherit;
-}
-
-button {
-  cursor: pointer;
-}
-
-.app-shell {
-  display: grid;
-  grid-template-columns: 280px 1fr;
-  min-height: 100vh;
-}
-
-.sidebar {
-  background: #242f48;
-  color: #f8fafc;
-  padding: 32px 24px;
-  display: flex;
-  flex-direction: column;
-  gap: 32px;
-}
-
-.brand {
-  font-size: 1.6rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-}
-
-.sidebar nav {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.nav-link {
-  display: inline-flex;
-  align-items: center;
-  padding: 12px 16px;
-  border-radius: 14px;
-  color: #cbd5e1;
-  transition: background 0.2s ease, color 0.2s ease;
-}
-
-.nav-link.active,
-.nav-link:hover {
-  background: rgba(255, 255, 255, 0.08);
-  color: #ffffff;
-}
-
-.sidebar .section-title {
-  margin: 0;
-  font-size: 0.9rem;
-  color: #94a3b8;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-}
-
-.content-area {
-  background: var(--bg);
-  padding: 28px 32px;
-}
-
-.topbar {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
+/* Styles pour les pages spécifiques si nécessaire */
+.page-header {
   margin-bottom: 24px;
 }
 
-.topbar input {
-  width: 320px;
-  max-width: 100%;
-  padding: 12px 16px;
-  border-radius: 999px;
-  border: 1px solid var(--border);
-  background: #fff;
-  color: var(--text);
-}
-
-.user-card {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  color: var(--text-muted);
-}
-
-.user-avatar {
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
-  background: var(--primary);
-  color: white;
-  display: grid;
-  place-items: center;
-  font-weight: 700;
-}
-
-.main-content {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 14px;
-}
-
 .page-header h1 {
-  margin: 0;
+  margin: 0 0 8px 0;
   font-size: clamp(2rem, 2.5vw, 2.6rem);
+  font-weight: 600;
 }
 
 .page-header p {
   margin: 0;
-  color: var(--text-muted);
+  color: rgba(0, 0, 0, 0.6);
 }
 
-.grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 20px;
-}
-
-.card,
-.panel {
-  background: var(--bg-surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 24px;
-  box-shadow: var(--shadow);
-}
-
-.card h2,
-.panel h2 {
-  margin-top: 0;
-  margin-bottom: 14px;
-  font-size: 1.05rem;
-}
-
-.card strong {
-  display: block;
-  margin-top: 12px;
-  font-size: 2rem;
-  color: var(--text);
-}
-
-.table {
-  width: 100%;
-  border-collapse: collapse;
-}
-
-.table th,
-.table td {
+/* Styles pour les tableaux personnalisés si nécessaire */
+.custom-table th,
+.custom-table td {
   text-align: left;
   padding: 14px 12px;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
 }
 
-.table th {
-  color: var(--text-muted);
-  font-size: 0.9rem;
-}
-
-.form-group {
-  display: grid;
-  gap: 10px;
-  margin-bottom: 18px;
-}
-
-label {
-  font-size: 0.95rem;
-  color: var(--text-muted);
-}
-
-input,
-select,
-button {
-  width: 100%;
-  padding: 12px 16px;
-  border-radius: 14px;
-  border: 1px solid var(--border);
-  background: #fff;
-}
-
-button.primary {
-  background: var(--primary);
-  color: #fff;
-  border-color: transparent;
+.custom-table th {
+  font-weight: 600;
+  color: rgba(0, 0, 0, 0.87);
 }
 
 button.danger {
