@@ -1,57 +1,66 @@
 <template>
   <AdminLayout>
-    <section class="page-header">
-      <div>
-        <h1>Calendrier</h1>
-        <p>Planifier et organiser vos tâches par date.</p>
-      </div>
-    </section>
-
-    <section class="panel calendar-panel">
-      <VueCalendar
-        ref="calendarRef"
-        :options="calendarOptions"
-        :events="calendarEvents"
-        @eventDrop="handleEventDrop"
-        @eventClick="handleEventClick"
-      />
-    </section>
-
-    <div v-if="selectedEvent" class="modal-overlay" @click.self="closeEventModal">
-      <div class="modal">
-        <div class="modal-header">
-          <h2>Modifier la tâche</h2>
-          <button class="close-button" @click="closeEventModal">×</button>
+    <!-- Page Header -->
+    <v-row class="mb-6">
+      <v-col cols="12">
+        <div>
+          <h1 class="text-h4 font-weight-bold mb-2">Calendrier</h1>
         </div>
+      </v-col>
+    </v-row>
 
-        <div class="form-group">
-          <label for="event-title">Titre</label>
-          <input id="event-title" v-model="selectedEvent.title" />
-        </div>
+    <!-- Calendar -->
+    <v-card class="mb-6">
+      <v-card-text class="pa-0">
+        <VueCalendar
+          ref="calendarRef"
+          :options="calendarOptions"
+          :events="calendarEvents"
+          @eventDrop="handleEventDrop"
+          @eventClick="handleEventClick"
+        />
+      </v-card-text>
+    </v-card>
 
-        <div class="form-group">
-          <label for="event-date">Date</label>
-          <input id="event-date" type="date" v-model="selectedEvent.start" />
-        </div>
+    <!-- Edit Event Dialog -->
+    <v-dialog v-model="showEventModal" max-width="500">
+      <v-card>
+        <v-card-title>Modifier la tâche</v-card-title>
+        <v-card-text>
+          <v-text-field
+            v-model="selectedEvent.title"
+            label="Titre"
+            class="mb-4"
+          />
 
-        <div class="form-group">
-          <label for="event-finish-at">Terminé le</label>
-          <input id="event-finish-at" type="date" v-model="selectedEvent.finishAt" />
-        </div>
+          <v-text-field
+            v-model="selectedEvent.start"
+            label="Date de création"
+            type="date"
+            class="mb-4"
+          />
 
-        <div class="modal-actions">
-          <button class="secondary" @click="closeEventModal">Annuler</button>
-          <button class="primary" @click="updateEvent">Sauvegarder</button>
-        </div>
-      </div>
-    </div>
+          <v-text-field
+            v-model="selectedEvent.finishAt"
+            label="Date de fin"
+            type="date"
+          />
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="showEventModal = false">Annuler</v-btn>
+          <v-btn color="primary" @click="updateEvent">Sauvegarder</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, reactive, onMounted } from 'vue'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import interactionPlugin from '@fullcalendar/interaction'
+import bootstrap5Plugin from '@fullcalendar/bootstrap5'
 import VueCalendar from '@fullcalendar/vue3'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -65,10 +74,17 @@ interface SelectedEvent {
 
 const tasksStore = useTasksStore()
 const calendarRef = ref()
-const selectedEvent = ref<SelectedEvent | null>(null)
+const showEventModal = ref(false)
+const selectedEvent = reactive<SelectedEvent>({
+  id: '',
+  title: '',
+  start: '',
+  finishAt: ''
+})
 
 const calendarOptions = {
-  plugins: [dayGridPlugin, interactionPlugin],
+  plugins: [dayGridPlugin, interactionPlugin, bootstrap5Plugin],
+  themeSystem: 'bootstrap5',
   initialView: 'dayGridMonth',
   editable: true,
   droppable: true,
@@ -80,9 +96,7 @@ const calendarOptions = {
   locale: 'fr',
   firstDay: 1,
   height: 'auto',
-  eventDisplay: 'block',
-  eventColor: '#4f46e5',
-  eventTextColor: '#ffffff'
+  eventDisplay: 'block'
 }
 
 const calendarEvents = computed(() => {
@@ -93,7 +107,8 @@ const calendarEvents = computed(() => {
     extendedProps: {
       finishAt: task.finishAt
     },
-    backgroundColor: task.finishAt ? '#16a34a' : '#4f46e5'
+    backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
+    borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
   }))
 })
 
@@ -112,31 +127,24 @@ const handleEventDrop = async (info: any) => {
 const handleEventClick = (info: any) => {
   const task = tasksStore.tasks.find(t => t.id === info.event.id)
   if (task) {
-    selectedEvent.value = {
-      id: task.id,
-      title: task.title,
-      start: task.createdAt,
-      finishAt: task.finishAt || ''
-    }
+    selectedEvent.id = task.id
+    selectedEvent.title = task.title
+    selectedEvent.start = task.createdAt
+    selectedEvent.finishAt = task.finishAt || ''
+    showEventModal.value = true
   }
 }
 
-const closeEventModal = () => {
-  selectedEvent.value = null
-}
-
 const updateEvent = async () => {
-  if (selectedEvent.value) {
-    try {
-      await tasksStore.updateTask(selectedEvent.value.id, {
-        title: selectedEvent.value.title,
-        createdAt: selectedEvent.value.start,
-        finishAt: selectedEvent.value.finishAt || null
-      })
-      closeEventModal()
-    } catch (error) {
-      console.error('Erreur lors de la mise à jour:', error)
-    }
+  try {
+    await tasksStore.updateTask(selectedEvent.id, {
+      title: selectedEvent.title,
+      createdAt: selectedEvent.start,
+      finishAt: selectedEvent.finishAt || null
+    })
+    showEventModal.value = false
+  } catch (error) {
+    console.error('Erreur lors de la mise à jour:', error)
   }
 }
 
@@ -152,85 +160,3 @@ onMounted(() => {
   }
 })
 </script>
-
-<style scoped>
-.calendar-panel {
-  padding: 0;
-  overflow: hidden;
-}
-
-:deep(.fc) {
-  font-family: inherit;
-}
-
-:deep(.fc-header-toolbar) {
-  margin-bottom: 1.5rem !important;
-  flex-wrap: wrap;
-  gap: 0.5rem;
-}
-
-:deep(.fc-button) {
-  background: var(--primary) !important;
-  border: none !important;
-  border-radius: 8px !important;
-  padding: 8px 12px !important;
-  font-size: 0.9rem !important;
-  font-weight: 500 !important;
-}
-
-:deep(.fc-button:hover) {
-  background: #4338ca !important;
-}
-
-:deep(.fc-button:not(:disabled).fc-button-active) {
-  background: #3730a3 !important;
-}
-
-:deep(.fc-today-button) {
-  background: #f8fafc !important;
-  color: var(--text) !important;
-  border: 1px solid var(--border) !important;
-}
-
-:deep(.fc-today-button:hover) {
-  background: #e5e7eb !important;
-}
-
-:deep(.fc-daygrid-day) {
-  height: 120px !important;
-}
-
-:deep(.fc-daygrid-day-number) {
-  padding: 8px !important;
-  font-weight: 600 !important;
-}
-
-:deep(.fc-event) {
-  border-radius: 6px !important;
-  border: none !important;
-  font-size: 0.85rem !important;
-  padding: 4px 8px !important;
-  cursor: pointer !important;
-}
-
-:deep(.fc-event:hover) {
-  opacity: 0.9 !important;
-}
-
-:deep(.fc-day-today) {
-  background: rgba(79, 70, 229, 0.05) !important;
-}
-
-@media (max-width: 768px) {
-  :deep(.fc-header-toolbar) {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  :deep(.fc-toolbar-chunk) {
-    display: flex;
-    justify-content: center;
-    margin-bottom: 0.5rem;
-  }
-}
-</style>
