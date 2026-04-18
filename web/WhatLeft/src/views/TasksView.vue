@@ -111,14 +111,12 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const tasksStore = useTasksStore()
-const tasks = tasksStore.tasks
-const isLoading = tasksStore.isLoading
-const hasError = tasksStore.hasError
-const error = tasksStore.error
+const { tasks, isLoading, hasError, error } = storeToRefs(tasksStore)
 
 const isModalOpen = ref(false)
 const newTaskTitle = ref('')
