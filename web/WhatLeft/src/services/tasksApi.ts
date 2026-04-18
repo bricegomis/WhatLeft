@@ -3,6 +3,11 @@ import type { Task } from '../stores/tasks'
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000/api'
 
 export class TasksApiService {
+  static async checkHealth(): Promise<boolean> {
+    const response = await fetch(`${API_BASE_URL}/`)
+    return response.ok
+  }
+
   static async fetchTasks(): Promise<Task[]> {
     const response = await fetch(`${API_BASE_URL}/tasks`)
     if (!response.ok) {
@@ -19,11 +24,9 @@ export class TasksApiService {
       },
       body: JSON.stringify({ title })
     })
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-
     return response.json()
   }
 
@@ -35,11 +38,9 @@ export class TasksApiService {
       },
       body: JSON.stringify(updates)
     })
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
-
     return response.json()
   }
 
@@ -47,7 +48,6 @@ export class TasksApiService {
     const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: 'DELETE'
     })
-
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }

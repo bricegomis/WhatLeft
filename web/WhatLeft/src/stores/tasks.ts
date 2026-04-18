@@ -12,21 +12,43 @@ export const useTasksStore = defineStore('tasks', {
   state: () => ({
     tasks: [] as Task[],
     loading: false,
-    error: null as string | null
+    error: null as string | null,
+    apiAvailable: true
   }),
 
   getters: {
     completedTasks: (state) => state.tasks.filter(task => task.completed),
     pendingTasks: (state) => state.tasks.filter(task => !task.completed),
     isLoading: (state) => state.loading,
-    hasError: (state) => state.error !== null
+    hasError: (state) => state.error !== null,
+    isApiAvailable: (state) => state.apiAvailable
   },
 
   actions: {
+    async checkApi() {
+      try {
+        const ok = await TasksApiService.checkHealth()
+        this.apiAvailable = ok
+        if (!ok) {
+          this.error = 'Le backend n’est pas disponible. Vérifiez que l’API est démarrée.'
+        }
+        return ok
+      } catch (error) {
+        this.apiAvailable = false
+        this.error = error instanceof Error ? `Backend indisponible : ${error.message}` : 'Backend indisponible'
+        console.error('Erreur dans checkApi:', error)
+        return false
+      }
+    },
+
     async fetchTasks() {
       this.loading = true
       this.error = null
       try {
+        const available = await this.checkApi()
+        if (!available) {
+          return
+        }
         this.tasks = await TasksApiService.fetchTasks()
       } catch (error) {
         this.error = error instanceof Error ? error.message : 'Erreur lors du chargement des tâches'

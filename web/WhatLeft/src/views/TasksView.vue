@@ -15,8 +15,13 @@
       <button @click="clearError">Fermer</button>
     </div>
 
+    <!-- Vérification API -->
+    <div v-if="!isApiAvailable" class="error-message">
+      <p>Le backend de l'API n'est pas disponible. Démarre le serveur dans le dossier `api/`.</p>
+    </div>
+
     <!-- État de chargement -->
-    <div v-if="isLoading && tasks.length === 0" class="loading-state">
+    <div v-else-if="isLoading && tasks.length === 0" class="loading-state">
       <p>Chargement des tâches...</p>
     </div>
 
@@ -116,7 +121,7 @@ import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const tasksStore = useTasksStore()
-const { tasks, isLoading, hasError, error } = storeToRefs(tasksStore)
+const { tasks, isLoading, hasError, error, isApiAvailable } = storeToRefs(tasksStore)
 
 const isModalOpen = ref(false)
 const newTaskTitle = ref('')
