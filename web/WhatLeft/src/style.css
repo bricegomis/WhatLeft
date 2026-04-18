@@ -1,53 +1,5 @@
-/* Styles personnalisés pour l'application - ne pas écraser Vuetify */
-
-/* Variables CSS pour les couleurs personnalisées si nécessaire */
-:root {
-  --custom-primary: #4f46e5;
-  --custom-success: #16a34a;
-  --custom-danger: #dc2626;
-}
-
-/* Styles spécifiques aux composants personnalisés seulement */
-/* Éviter les styles globaux qui cassent Vuetify */
-
-/* Animations et transitions personnalisées */
-.v-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.v-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-}
-
-/* Styles pour les pages spécifiques si nécessaire */
-.page-header {
-  margin-bottom: 24px;
-}
-
-.page-header h1 {
-  margin: 0 0 8px 0;
-  font-size: clamp(2rem, 2.5vw, 2.6rem);
-  font-weight: 600;
-}
-
-.page-header p {
-  margin: 0;
-  color: rgba(0, 0, 0, 0.6);
-}
-
-/* Styles pour les tableaux personnalisés si nécessaire */
-.custom-table th,
-.custom-table td {
-  text-align: left;
-  padding: 14px 12px;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.12);
-}
-
-.custom-table th {
-  font-weight: 600;
-  color: rgba(0, 0, 0, 0.87);
-}
+/* CSS minimal pour éviter les conflits avec Vuetify */
+/* Ne pas utiliser de styles globaux qui pourraient écraser Vuetify */
 
 button.danger {
   background: var(--danger);
