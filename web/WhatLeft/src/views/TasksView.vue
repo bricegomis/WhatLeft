@@ -5,15 +5,25 @@
         <h1>Liste des tâches</h1>
         <p>Suivre et terminer les tâches en cours.</p>
       </div>
-      <button class="primary" @click="openModal">Nouvelle tâche</button>
+      <button class="primary" @click="openModal" :disabled="isLoading">Nouvelle tâche</button>
     </section>
 
-    <section class="panel">
-      <h2>Tâches</h2>
-      <div v-if="tasks.length === 0" class="empty-state">
-        <p>Aucune tâche pour le moment. Ajoute une nouvelle tâche pour commencer.</p>
-      </div>
-      <table v-else class="table task-list">
+    <!-- Message d'erreur -->
+    <div v-if="hasError" class="error-message">
+      <p>{{ error }}</p>
+      <button @click="retryLoad">Réessayer</button>
+      <button @click="clearError">Fermer</button>
+    </div>
+
+    <!-- État de chargement -->
+    <div v-if="isLoading && tasks.length === 0" class="loading-state">
+      <p>Chargement des tâches...</p>
+    </div>
+
+    <!-- Liste des tâches -->
+    <section v-else-if="tasks.length > 0" class="panel">
+      <h2>Tâches ({{ tasks.length }})</h2>
+      <table class="table task-list">
         <thead>
           <tr>
             <th>Tâche</th>
@@ -26,15 +36,32 @@
           <tr v-for="task in tasks" :key="task.id" :class="{ completed: task.completed }">
             <td>
               <label class="task-row">
-                <input type="checkbox" class="task-checkbox" :checked="task.completed" @change="toggleComplete(task.id)" />
+                <input
+                  type="checkbox"
+                  class="task-checkbox"
+                  :checked="task.completed"
+                  @change="toggleComplete(task.id)"
+                  :disabled="isLoading"
+                />
                 <span>{{ task.title }}</span>
               </label>
             </td>
             <td>{{ task.createdAt }}</td>
             <td>{{ task.completed ? 'Terminée' : 'En cours' }}</td>
             <td>
-              <button class="secondary" @click="toggleComplete(task.id)">
+              <button
+                class="secondary"
+                @click="toggleComplete(task.id)"
+                :disabled="isLoading"
+              >
                 {{ task.completed ? 'Reprendre' : 'Terminer' }}
+              </button>
+              <button
+                class="danger"
+                @click="removeTask(task.id)"
+                :disabled="isLoading"
+              >
+                Supprimer
               </button>
             </td>
           </tr>
@@ -42,6 +69,14 @@
       </table>
     </section>
 
+    <!-- État vide -->
+    <section v-else class="panel empty-state">
+      <h2>Aucune tâche</h2>
+      <p>Il n'y a pas encore de tâches. Créez votre première tâche !</p>
+      <button class="primary" @click="openModal" :disabled="isLoading">Créer une tâche</button>
+    </section>
+
+    <!-- Modal pour créer une tâche -->
     <div v-if="isModalOpen" class="modal-overlay" @click.self="closeModal">
       <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modal-title">
         <div class="modal-header">
@@ -51,12 +86,23 @@
 
         <div class="form-group">
           <label for="task-title">Titre de la tâche</label>
-          <input id="task-title" v-model="newTaskTitle" placeholder="Par exemple : Envoyer le rapport" />
+          <input
+            id="task-title"
+            v-model="newTaskTitle"
+            placeholder="Par exemple : Envoyer le rapport"
+            :disabled="isCreating"
+          />
         </div>
 
         <div class="modal-actions">
-          <button class="secondary" @click="closeModal">Annuler</button>
-          <button class="primary" @click="createTask">Créer</button>
+          <button class="secondary" @click="closeModal" :disabled="isCreating">Annuler</button>
+          <button
+            class="primary"
+            @click="createTask"
+            :disabled="!newTaskTitle.trim() || isCreating"
+          >
+            {{ isCreating ? 'Création...' : 'Créer' }}
+          </button>
         </div>
       </div>
     </div>
@@ -64,14 +110,19 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const tasksStore = useTasksStore()
 const tasks = tasksStore.tasks
+const isLoading = tasksStore.isLoading
+const hasError = tasksStore.hasError
+const error = tasksStore.error
+
 const isModalOpen = ref(false)
 const newTaskTitle = ref('')
+const isCreating = ref(false)
 
 const openModal = () => {
   newTaskTitle.value = ''
@@ -80,14 +131,42 @@ const openModal = () => {
 
 const closeModal = () => {
   isModalOpen.value = false
+  newTaskTitle.value = ''
 }
 
-const createTask = () => {
-  tasksStore.addTask(newTaskTitle.value)
-  closeModal()
+const createTask = async () => {
+  if (!newTaskTitle.value.trim()) return
+
+  isCreating.value = true
+  try {
+    await tasksStore.addTask(newTaskTitle.value)
+    closeModal()
+  } catch (error) {
+    console.error('Erreur lors de la création:', error)
+  } finally {
+    isCreating.value = false
+  }
 }
 
-const toggleComplete = (id: string) => {
-  tasksStore.toggleComplete(id)
+const toggleComplete = async (id: string) => {
+  await tasksStore.toggleComplete(id)
 }
+
+const removeTask = async (id: string) => {
+  if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
+    await tasksStore.removeTask(id)
+  }
+}
+
+const retryLoad = () => {
+  tasksStore.fetchTasks()
+}
+
+const clearError = () => {
+  tasksStore.clearError()
+}
+
+onMounted(() => {
+  tasksStore.fetchTasks()
+})
 </script>

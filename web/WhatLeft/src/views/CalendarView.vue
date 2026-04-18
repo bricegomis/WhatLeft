@@ -100,14 +100,16 @@ const calendarEvents = computed(() => {
   }))
 })
 
-const handleEventDrop = (info: any) => {
+const handleEventDrop = async (info: any) => {
   const taskId = info.event.id
   const newDate = info.event.start.toISOString().slice(0, 10)
 
-  // Mettre à jour la date de la tâche
-  const task = tasksStore.tasks.find(t => t.id === taskId)
-  if (task) {
-    task.createdAt = newDate
+  try {
+    await tasksStore.updateTask(taskId, { createdAt: newDate })
+  } catch (error) {
+    // Revert the drag operation on error
+    info.revert()
+    console.error('Erreur lors du déplacement de la tâche:', error)
   }
 }
 
@@ -127,15 +129,18 @@ const closeEventModal = () => {
   selectedEvent.value = null
 }
 
-const updateEvent = () => {
+const updateEvent = async () => {
   if (selectedEvent.value) {
-    const task = tasksStore.tasks.find(t => t.id === selectedEvent.value!.id)
-    if (task) {
-      task.title = selectedEvent.value.title
-      task.createdAt = selectedEvent.value.start
-      task.completed = selectedEvent.value.completed
+    try {
+      await tasksStore.updateTask(selectedEvent.value.id, {
+        title: selectedEvent.value.title,
+        createdAt: selectedEvent.value.start,
+        completed: selectedEvent.value.completed
+      })
+      closeEventModal()
+    } catch (error) {
+      console.error('Erreur lors de la mise à jour:', error)
     }
-    closeEventModal()
   }
 }
 
@@ -146,6 +151,11 @@ onMounted(() => {
       calendarRef.value.getApi().render()
     }
   }, 100)
+
+  // Charger les tâches si elles ne sont pas déjà chargées
+  if (tasksStore.tasks.length === 0) {
+    tasksStore.fetchTasks()
+  }
 })
 </script>
 

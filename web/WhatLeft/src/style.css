@@ -233,15 +233,49 @@ button.primary {
   border-color: transparent;
 }
 
-button.secondary {
-  background: #f8fafc;
-  color: var(--text);
-  border-color: #d1d5db;
+button.danger {
+  background: var(--danger);
+  color: #fff;
+  border-color: transparent;
 }
 
-button.primary:hover,
-button.secondary:hover {
+button.danger:hover {
   opacity: 0.95;
+}
+
+.error-message {
+  background: #fef2f2;
+  border: 1px solid #fecaca;
+  border-radius: var(--radius);
+  padding: 16px;
+  margin-bottom: 24px;
+  color: var(--danger);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.error-message p {
+  margin: 0;
+  flex: 1;
+}
+
+.error-message button {
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+
+.loading-state {
+  text-align: center;
+  padding: 48px 24px;
+  color: var(--text-muted);
+}
+
+.loading-state p {
+  margin: 0;
+  font-size: 1.1rem;
 }
 
 .empty-state {

@@ -1,4 +1,5 @@
 import { defineStore } from 'pinia'
+import { TasksApiService } from '../services/tasksApi'
 
 export interface Task {
   id: string
@@ -9,30 +10,110 @@ export interface Task {
 
 export const useTasksStore = defineStore('tasks', {
   state: () => ({
-    tasks: [
-      { id: '1', title: 'Préparer le rapport hebdo', completed: false, createdAt: '2026-04-18' },
-      { id: '2', title: 'Relire les demandes clients', completed: true, createdAt: '2026-04-17' },
-      { id: '3', title: 'Planifier la réunion produit', completed: false, createdAt: '2026-04-20' },
-      { id: '4', title: 'Mettre à jour la documentation', completed: false, createdAt: '2026-04-22' },
-      { id: '5', title: 'Réunion équipe', completed: false, createdAt: '2026-04-25' }
-    ] as Task[]
+    tasks: [] as Task[],
+    loading: false,
+    error: null as string | null
   }),
+
+  getters: {
+    completedTasks: (state) => state.tasks.filter(task => task.completed),
+    pendingTasks: (state) => state.tasks.filter(task => !task.completed),
+    isLoading: (state) => state.loading,
+    hasError: (state) => state.error !== null
+  },
+
   actions: {
-    addTask(title: string) {
+    async fetchTasks() {
+      this.loading = true
+      this.error = null
+      try {
+        this.tasks = await TasksApiService.fetchTasks()
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Erreur lors du chargement des tâches'
+        console.error('Erreur dans fetchTasks:', error)
+      } finally {
+        this.loading = false
+      }
+    },
+
+    async addTask(title: string) {
       if (!title.trim()) return
-      this.tasks.unshift({
-        id: Date.now().toString(),
-        title: title.trim(),
-        completed: false,
-        createdAt: new Date().toISOString().slice(0, 10)
-      })
+
+      this.loading = true
+      this.error = null
+      try {
+        const newTask = await TasksApiService.createTask(title.trim())
+        this.tasks.unshift(newTask)
+      } catch (error) {
+        this.error = error instanceof Error ? error.message : 'Erreur lors de la création de la tâche'
+        console.error('Erreur dans addTask:', error)
+      } finally {
+        this.loading = false
+      }
     },
-    toggleComplete(id: string) {
+
+    async toggleComplete(id: string) {
       const task = this.tasks.find((item) => item.id === id)
-      if (task) task.completed = !task.completed
+      if (!task) return
+
+      const newCompleted = !task.completed
+      const originalCompleted = task.completed
+
+      // Optimistic update
+      task.completed = newCompleted
+
+      try {
+        await TasksApiService.updateTask(id, { completed: newCompleted })
+      } catch (error) {
+        // Revert on error
+        task.completed = originalCompleted
+        this.error = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la tâche'
+        console.error('Erreur dans toggleComplete:', error)
+      }
     },
-    removeTask(id: string) {
-      this.tasks = this.tasks.filter((item) => item.id !== id)
+
+    async updateTask(id: string, updates: Partial<Task>) {
+      const task = this.tasks.find((item) => item.id === id)
+      if (!task) return
+
+      const originalTask = { ...task }
+
+      // Optimistic update
+      Object.assign(task, updates)
+
+      try {
+        const updatedTask = await TasksApiService.updateTask(id, updates)
+        // Replace with server response
+        Object.assign(task, updatedTask)
+      } catch (error) {
+        // Revert on error
+        Object.assign(task, originalTask)
+        this.error = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la tâche'
+        console.error('Erreur dans updateTask:', error)
+      }
+    },
+
+    async removeTask(id: string) {
+      const taskIndex = this.tasks.findIndex((item) => item.id === id)
+      if (taskIndex === -1) return
+
+      const removedTask = this.tasks[taskIndex]
+
+      // Optimistic update
+      this.tasks.splice(taskIndex, 1)
+
+      try {
+        await TasksApiService.deleteTask(id)
+      } catch (error) {
+        // Revert on error
+        this.tasks.splice(taskIndex, 0, removedTask)
+        this.error = error instanceof Error ? error.message : 'Erreur lors de la suppression de la tâche'
+        console.error('Erreur dans removeTask:', error)
+      }
+    },
+
+    clearError() {
+      this.error = null
     }
   }
 })
