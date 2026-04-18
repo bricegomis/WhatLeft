@@ -25,42 +25,41 @@
           <v-card
             v-for="task in tasksStore.tasks"
             :key="task.id"
-            draggable
+            draggable="true"
             @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd"
-            class="draggable-task cursor-grab"
-            :style="{ minHeight: `${60 + task.duration * 20}px` }"
-            :class="{ completed: task.finishAt, 'opacity-75': task.finishAt }"
+            class="draggable-task"
+            :style="{ 
+              minHeight: `${task.duration >= 4 ? 100 : 80}px`,
+              background: getTaskBackground(task)
+            }"
+            :class="{ completed: task.finishAt }"
           >
-            <v-card-text class="d-flex flex-column justify-space-between h-100 pa-3">
-              <div>
-                <h4 class="text-body-2 font-weight-bold mb-2" :class="{ 'text-decoration-line-through': task.finishAt }">
+            <v-card-text class="d-flex flex-column justify-space-between h-100 pa-3 position-relative">
+              <!-- Title and Duration Row -->
+              <div class="d-flex justify-space-between align-start gap-2">
+                <h4 class="text-body-2 font-weight-bold text-white flex-grow-1" :class="{ 'text-decoration-line-through': task.finishAt }">
                   {{ task.title }}
                 </h4>
-                <div class="text-caption text-medium-emphasis">
-                  <p class="mb-1">⏱ {{ task.duration }}h</p>
-                  <p v-if="task.createdAt" class="mb-0">
-                    {{ formatDate(task.createdAt) }}
-                  </p>
-                </div>
+                <span class="text-caption text-white font-weight-bold flex-shrink-0">
+                  {{ task.duration }}h
+                </span>
               </div>
               
-              <div class="d-flex gap-2 mt-2">
-                <v-btn
+              <!-- Tags Row -->
+              <div class="d-flex flex-wrap gap-1 mt-2">
+                <v-chip
+                  v-for="(tag, index) in getTaskTags(task)"
+                  :key="index"
                   size="x-small"
                   variant="outlined"
-                  color="primary"
-                  @click="toggleFinish(task.id)"
-                  :icon="task.finishAt ? 'mdi-undo' : 'mdi-check'"
-                  class="flex-grow-1"
-                />
-                <v-btn
-                  size="x-small"
-                  variant="outlined"
-                  color="error"
-                  icon="mdi-delete"
-                  @click="removeTask(task.id)"
-                />
+                  class="tag-chip"
+                >
+                  {{ tag }}
+                </v-chip>
+                <span v-if="getTaskTags(task).length === 0" class="text-caption text-white-50 align-self-center">
+                  Pas de tags
+                </span>
               </div>
             </v-card-text>
           </v-card>
@@ -120,8 +119,8 @@
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted } from 'vue'
 import dayGridPlugin from '@fullcalendar/daygrid'
+import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
-import bootstrap5Plugin from '@fullcalendar/bootstrap5'
 import VueCalendar from '@fullcalendar/vue3'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -144,16 +143,15 @@ const selectedEvent = reactive<SelectedEvent>({
 })
 
 const calendarOptions = {
-  plugins: [dayGridPlugin, interactionPlugin, bootstrap5Plugin],
-  themeSystem: 'bootstrap5',
+  plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
   initialView: 'dayGridMonth',
   editable: true,
   droppable: true,
   headerToolbar: {
-    left: 'prev,next today',
-    center: 'title',
-    right: 'dayGridMonth,dayGridWeek'
-  },
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
   locale: 'fr',
   firstDay: 1,
   height: 'auto',
@@ -224,12 +222,47 @@ const removeTask = async (id: string) => {
   }
 }
 
+const getTaskTags = (task: any) => {
+  // Exemple: extraire les tags du titre s'ils sont entre #
+  // Sinon, retourner des tags basés sur la catégorie
+  const titleTags = (task.title.match(/#[\w-]+/g) || []).map(tag => tag.substring(1))
+  
+  if (titleTags.length > 0) {
+    return titleTags.slice(0, 3) // Max 3 tags
+  }
+  
+  // Tags basés sur la durée
+  if (task.duration >= 8) {
+    return ['long', 'important']
+  } else if (task.duration >= 4) {
+    return ['moyen']
+  } else {
+    return ['rapide']
+  }
+}
+
 const formatDate = (dateString: string) => {
   const date = new Date(dateString)
   return date.toLocaleDateString('fr-FR', {
     month: 'short',
     day: 'numeric'
   })
+}
+
+const getTaskBackground = (task: any) => {
+  // Gradient based on duration
+  if (task.finishAt) {
+    return 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
+  }
+  
+  // Color intensity based on duration
+  if (task.duration >= 8) {
+    return 'linear-gradient(135deg, #ff5252 0%, #ff1744 100%)'
+  } else if (task.duration >= 4) {
+    return 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)'
+  } else {
+    return 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)'
+  }
 }
 
 const handleDragStart = (event: DragEvent, task: any) => {
@@ -240,6 +273,7 @@ const handleDragStart = (event: DragEvent, task: any) => {
       title: task.title,
       duration: 3600000 // 1 hour in milliseconds
     }))
+    event.dataTransfer.setData('text/plain', task.title)
   }
 }
 
@@ -263,30 +297,57 @@ onMounted(() => {
 <style scoped>
 .draggable-task {
   cursor: grab;
-  transition: all 0.2s ease;
-  border: 2px solid rgba(0, 0, 0, 0.05);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  overflow: hidden;
+  position: relative;
+  user-select: none;
 }
 
 .draggable-task:hover {
   cursor: grab;
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
+  transform: translateY(-4px);
 }
 
 .draggable-task:active {
   cursor: grabbing;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  transform: translateY(-6px);
 }
 
 .draggable-task.completed {
-  opacity: 0.6;
-  background-color: rgba(76, 175, 80, 0.05);
+  opacity: 0.85;
 }
 
-.cursor-grab {
-  cursor: grab;
+.draggable-task .task-actions {
+  display: flex;
+  gap: 4px;
+  margin-top: 8px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+  align-self: flex-end;
 }
 
-.cursor-grab:active {
-  cursor: grabbing;
+.draggable-task:hover .task-actions {
+  opacity: 1;
+}
+
+.tag-chip {
+  border-color: rgba(255, 255, 255, 0.5) !important;
+  color: white !important;
+  font-weight: 500;
+  height: 20px !important;
+}
+
+.tag-chip :deep(.v-chip__content) {
+  font-size: 0.75rem !important;
+  padding: 0 6px !important;
+}
+
+.position-relative {
+  position: relative;
 }
 </style>
