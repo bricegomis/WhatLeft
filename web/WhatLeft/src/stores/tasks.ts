@@ -6,6 +6,7 @@ export interface Task {
   title: string
   createdAt: string
   duration: number
+  startAt: string | null
   finishAt: string | null
 }
 
@@ -59,7 +60,7 @@ export const useTasksStore = defineStore('tasks', {
       }
     },
 
-    async addTask(title: string, duration = 1, finishAt: string | null = null) {
+    async addTask(title: string, duration = 1, startAt: string | null = null, finishAt: string | null = null) {
       if (!title.trim()) return
 
       this.loading = true
@@ -68,6 +69,7 @@ export const useTasksStore = defineStore('tasks', {
         const newTask = await TasksApiService.createTask({
           title: title.trim(),
           duration,
+          startAt,
           finishAt
         })
         this.tasks.unshift(newTask)
