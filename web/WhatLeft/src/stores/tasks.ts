@@ -21,6 +21,8 @@ export const useTasksStore = defineStore('tasks', {
   getters: {
     finishedTasks: (state) => state.tasks.filter(task => Boolean(task.finishAt)),
     pendingTasks: (state) => state.tasks.filter(task => !task.finishAt),
+    unscheduledTasks: (state) => state.tasks.filter(task => !task.startAt),
+    scheduledTasks: (state) => state.tasks.filter(task => Boolean(task.startAt)),
     isLoading: (state) => state.loading,
     hasError: (state) => state.error !== null,
     isApiAvailable: (state) => state.apiAvailable

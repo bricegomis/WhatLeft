@@ -64,7 +64,6 @@ router.patch('/:id', async (req, res) => {
     }
 
     task.title = typeof updates.title === 'string' ? updates.title : task.title
-    task.createdAt = typeof updates.createdAt === 'string' ? updates.createdAt : task.createdAt
     task.duration = typeof updates.duration === 'number' && updates.duration > 0 ? updates.duration : task.duration
     task.startAt = updates.startAt === null || typeof updates.startAt === 'string' ? updates.startAt : task.startAt
     task.finishAt = updates.finishAt === null || typeof updates.finishAt === 'string' ? updates.finishAt : task.finishAt

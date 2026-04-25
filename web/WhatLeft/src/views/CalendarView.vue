@@ -17,14 +17,14 @@
       <!-- Left: Tasks Cards -->
       <v-col cols="12" md="3">
         <div class="d-flex flex-column gap-3 task-list-container">
-          <div v-if="tasksStore.tasks.length === 0" class="text-center text-medium-emphasis pa-8">
+          <div v-if="tasksStore.unscheduledTasks.length === 0" class="text-center text-medium-emphasis pa-8">
             <p class="text-body-2">Aucune tâche</p>
-            <p class="text-caption">Créez une tâche à partir de la page des tâches</p>
+            <p class="text-caption">Toutes les tâches sont planifiées ou créez une nouvelle tâche</p>
           </div>
           <!-- @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd" -->
           <v-card
-            v-for="task in tasksStore.tasks"
+            v-for="task in tasksStore.unscheduledTasks"
             :key="task.id"
             class="draggable-task fc-event"
             :data-event-id="task.id"
@@ -100,7 +100,7 @@
 
           <v-text-field
             v-model="selectedEvent.start"
-            label="Date de création"
+            label="Date de début prévue"
             type="date"
             class="mb-4"
           />
@@ -172,17 +172,18 @@ const calendarOptions = {
     const newDate = info.event.start?.toISOString().split('T')[0]
     
     if (taskId && newDate) {
-      tasksStore.updateTask(taskId, { createdAt: newDate })
-      console.log(`Tâche ${taskId} déplacée au ${newDate}`)
+      tasksStore.updateTask(taskId, { startAt: newDate })
+      console.log(`Tâche ${taskId} planifiée au ${newDate}`)
     }
   }
 }
 
 const calendarEvents = computed(() => {
-  return tasksStore.tasks.map(task => ({
+  return tasksStore.scheduledTasks.map(task => ({
     id: task.id,
     title: task.title,
-    start: task.createdAt,
+    start: task.startAt,
+    duration: task.duration,
     extendedProps: {
       finishAt: task.finishAt
     },
@@ -196,7 +197,7 @@ const handleEventDrop = async (info: any) => {
   const newDate = info.event.start.toISOString().slice(0, 10)
   console.log("on drop");
   try {
-    await tasksStore.updateTask(taskId, { createdAt: newDate })
+    await tasksStore.updateTask(taskId, { startAt: newDate })
   } catch (error) {
     info.revert()
     console.error('Erreur lors du déplacement de la tâche:', error)
@@ -208,7 +209,7 @@ const handleEventClick = (info: any) => {
   if (task) {
     selectedEvent.id = task.id
     selectedEvent.title = task.title
-    selectedEvent.start = task.createdAt
+    selectedEvent.start = task.startAt || ''
     selectedEvent.finishAt = task.finishAt || ''
     showEventModal.value = true
   }
@@ -218,7 +219,7 @@ const updateEvent = async () => {
   try {
     await tasksStore.updateTask(selectedEvent.id, {
       title: selectedEvent.title,
-      createdAt: selectedEvent.start,
+      startAt: selectedEvent.start || null,
       finishAt: selectedEvent.finishAt || null
     })
     showEventModal.value = false
@@ -286,15 +287,16 @@ const getTaskBackground = (task: any) => {
 }
 
 const getTaskTimeRange = (task: any) => {
-  if (!task.createdAt) return ''
+  if (!task.startAt) return 'Non planifiée'
   
-  const startTime = new Date(task.createdAt)
+  const startTime = new Date(task.startAt)
   const endTime = new Date(startTime.getTime() + task.duration * 60 * 60 * 1000)
   
-  const start = startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  const end = endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const dateStr = startTime.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })
+  const startStr = startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  const endStr = endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
   
-  return `${start} - ${end}`
+  return `${dateStr} • ${startStr} - ${endStr}`
 }
 
 // Drag & drop is now handled by FullCalendar's Draggable
