@@ -169,35 +169,42 @@ const calendarOptions = {
     // The ID is stored in the element's data attribute
     const draggedEl = info.draggedEl
     const taskId = draggedEl?.getAttribute('data-event-id')
-    const newDate = info.event.start?.toISOString().split('T')[0]
+    const newStartAt = info.event.start?.toISOString()
     
-    if (taskId && newDate) {
-      tasksStore.updateTask(taskId, { startAt: newDate })
-      console.log(`Tâche ${taskId} planifiée au ${newDate}`)
+    if (taskId && newStartAt) {
+      tasksStore.updateTask(taskId, { startAt: newStartAt })
+      console.log(`Tâche ${taskId} planifiée au ${newStartAt}`)
     }
   }
 }
 
 const calendarEvents = computed(() => {
-  return tasksStore.scheduledTasks.map(task => ({
-    id: task.id,
-    title: task.title,
-    start: task.startAt,
-    duration: task.duration,
-    extendedProps: {
-      finishAt: task.finishAt
-    },
-    backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
-    borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
-  }))
+  return tasksStore.scheduledTasks.map(task => {
+    // Les dates sont en UTC (ISO 8601 avec Z), FullCalendar les affichera selon la timezone locale
+    const startDate = new Date(task.startAt || '')
+    const endDate = new Date(startDate.getTime() + task.duration * 60 * 60 * 1000)
+    
+    return {
+      id: task.id,
+      title: task.title,
+      start: task.startAt,
+      end: endDate.toISOString(),
+      extendedProps: {
+        finishAt: task.finishAt,
+        duration: task.duration
+      },
+      backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
+      borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
+    }
+  })
 })
 
 const handleEventDrop = async (info: any) => {
   const taskId = info.event.id
-  const newDate = info.event.start.toISOString().slice(0, 10)
+  const newStartAt = info.event.start.toISOString()
   console.log("on drop");
   try {
-    await tasksStore.updateTask(taskId, { startAt: newDate })
+    await tasksStore.updateTask(taskId, { startAt: newStartAt })
   } catch (error) {
     info.revert()
     console.error('Erreur lors du déplacement de la tâche:', error)
