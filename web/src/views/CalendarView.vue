@@ -149,7 +149,7 @@ const selectedEvent = reactive<SelectedEvent>({
 
 const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: 'dayGridMonth',
+  initialView: 'timeGridWeek',
   editable: true,
   droppable: true,
   events: tasksStore.scheduledTasks.map(task => {
