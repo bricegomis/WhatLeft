@@ -8,6 +8,7 @@ export interface Task {
   duration: number
   startAt: string | null
   finishAt: string | null
+  tags: string[]
 }
 
 export const useTasksStore = defineStore('tasks', {
@@ -62,7 +63,7 @@ export const useTasksStore = defineStore('tasks', {
       }
     },
 
-    async addTask(title: string, duration = 1, startAt: string | null = null, finishAt: string | null = null) {
+    async addTask(title: string, duration = 1, startAt: string | null = null, finishAt: string | null = null, tags: string[] = []) {
       if (!title.trim()) return
 
       this.loading = true
@@ -72,7 +73,8 @@ export const useTasksStore = defineStore('tasks', {
           title: title.trim(),
           duration,
           startAt,
-          finishAt
+          finishAt,
+          tags
         })
         this.tasks.unshift(newTask)
       } catch (error) {

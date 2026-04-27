@@ -27,7 +27,7 @@ router.get('/', async (_req, res) => {
 
 router.post('/', async (req, res) => {
   try {
-    const { title, duration, startAt, finishAt } = req.body
+    const { title, duration, startAt, finishAt, tags } = req.body
     if (!title || typeof title !== 'string') {
       return res.status(400).json({ error: 'Le titre est requis' })
     }
@@ -39,7 +39,8 @@ router.post('/', async (req, res) => {
       createdAt: new Date().toISOString().slice(0, 10),
       duration: typeof duration === 'number' && duration > 0 ? duration : 1,
       startAt: typeof startAt === 'string' ? startAt : null,
-      finishAt: typeof finishAt === 'string' ? finishAt : null
+      finishAt: typeof finishAt === 'string' ? finishAt : null,
+      tags: Array.isArray(tags) ? tags : []
     }
 
     tasks.unshift(newTask)
@@ -67,6 +68,7 @@ router.patch('/:id', async (req, res) => {
     task.duration = typeof updates.duration === 'number' && updates.duration > 0 ? updates.duration : task.duration
     task.startAt = updates.startAt === null || typeof updates.startAt === 'string' ? updates.startAt : task.startAt
     task.finishAt = updates.finishAt === null || typeof updates.finishAt === 'string' ? updates.finishAt : task.finishAt
+    task.tags = Array.isArray(updates.tags) ? updates.tags : task.tags
 
     await saveTasks(tasks)
     res.json(task)

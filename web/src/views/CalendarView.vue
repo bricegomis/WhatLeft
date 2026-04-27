@@ -228,22 +228,7 @@ const updateEvent = async () => {
 }
 
 const getTaskTags = (task: any) => {
-  // Exemple: extraire les tags du titre s'ils sont entre #
-  // Sinon, retourner des tags basés sur la catégorie
-  const titleTags = (task.title.match(/#[\w-]+/g) || []).map(tag => tag.substring(1))
-  
-  if (titleTags.length > 0) {
-    return titleTags.slice(0, 3) // Max 3 tags
-  }
-  
-  // Tags basés sur la durée
-  if (task.duration >= 8) {
-    return ['long', 'important']
-  } else if (task.duration >= 4) {
-    return ['moyen']
-  } else {
-    return ['rapide']
-  }
+  return task.tags || []
 }
 
 const getTaskBackground = (task: any) => {

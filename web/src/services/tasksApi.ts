@@ -16,7 +16,7 @@ export class TasksApiService {
     return response.json()
   }
 
-  static async createTask(data: { title: string; duration: number; startAt: string | null; finishAt: string | null }): Promise<Task> {
+  static async createTask(data: { title: string; duration: number; startAt: string | null; finishAt: string | null; tags?: string[] }): Promise<Task> {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: 'POST',
       headers: {
