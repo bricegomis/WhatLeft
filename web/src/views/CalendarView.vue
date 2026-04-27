@@ -78,7 +78,6 @@
             <VueCalendar
               ref="calendarRef"
               :options="calendarOptions"
-              :events="calendarEvents"
               @eventDrop="handleEventDrop"
               @eventClick="handleEventClick"
             />
@@ -148,39 +147,12 @@ const selectedEvent = reactive<SelectedEvent>({
   finishAt: ''
 })
 
-const calendarOptions = {
+const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: 'timeGridDay',
+  initialView: 'dayGridMonth',
   editable: true,
   droppable: true,
-  headerToolbar: {
-      left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
-    },
-  locale: 'fr',
-  firstDay: 1,
-  drop: (info: any) => {
-    // Handle drop from external elements
-    console.log('Event dropped:', info)
-  },
-  eventReceive: (info: any) => {
-    // Handle event received from external drag
-    // The ID is stored in the element's data attribute
-    const draggedEl = info.draggedEl
-    const taskId = draggedEl?.getAttribute('data-event-id')
-    const newStartAt = info.event.start?.toISOString()
-    
-    if (taskId && newStartAt) {
-      tasksStore.updateTask(taskId, { startAt: newStartAt })
-      console.log(`Tâche ${taskId} planifiée au ${newStartAt}`)
-    }
-  }
-}
-
-const calendarEvents = computed(() => {
-  return tasksStore.scheduledTasks.map(task => {
-    // Les dates sont en UTC (ISO 8601 avec Z), FullCalendar les affichera selon la timezone locale
+  events: tasksStore.scheduledTasks.map(task => {
     const startDate = new Date(task.startAt || '')
     const endDate = new Date(startDate.getTime() + task.duration * 60 * 60 * 1000)
     
@@ -196,8 +168,28 @@ const calendarEvents = computed(() => {
       backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
       borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
     }
-  })
-})
+  }),
+  headerToolbar: {
+      left: 'prev,next today',
+      center: 'title',
+      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+    },
+  locale: 'fr',
+  firstDay: 1,
+  drop: (info: any) => {
+    console.log('Event dropped:', info)
+  },
+  eventReceive: (info: any) => {
+    const draggedEl = info.draggedEl
+    const taskId = draggedEl?.getAttribute('data-event-id')
+    const newStartAt = info.event.start?.toISOString()
+    
+    if (taskId && newStartAt) {
+      tasksStore.updateTask(taskId, { startAt: newStartAt })
+      console.log(`Tâche ${taskId} planifiée au ${newStartAt}`)
+    }
+  }
+}))
 
 const handleEventDrop = async (info: any) => {
   const taskId = info.event.id
@@ -235,21 +227,6 @@ const updateEvent = async () => {
   }
 }
 
-const toggleFinish = async (id: string) => {
-  const task = tasksStore.tasks.find(t => t.id === id)
-  if (task) {
-    await tasksStore.updateTask(id, {
-      finishAt: task.finishAt ? null : new Date().toISOString().split('T')[0]
-    })
-  }
-}
-
-const removeTask = async (id: string) => {
-  if (confirm('Êtes-vous sûr de vouloir supprimer cette tâche ?')) {
-    await tasksStore.removeTask(id)
-  }
-}
-
 const getTaskTags = (task: any) => {
   // Exemple: extraire les tags du titre s'ils sont entre #
   // Sinon, retourner des tags basés sur la catégorie
@@ -267,14 +244,6 @@ const getTaskTags = (task: any) => {
   } else {
     return ['rapide']
   }
-}
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  return date.toLocaleDateString('fr-FR', {
-    month: 'short',
-    day: 'numeric'
-  })
 }
 
 const getTaskBackground = (task: any) => {
@@ -309,6 +278,11 @@ const getTaskTimeRange = (task: any) => {
 // Drag & drop is now handled by FullCalendar's Draggable
 
 onMounted(async () => {
+  // Charger les tâches en premier
+  if (tasksStore.tasks.length === 0) {
+    await tasksStore.fetchTasks()
+  }
+
   // Wait for DOM to be ready
   await nextTick()
   
@@ -356,10 +330,6 @@ onMounted(async () => {
       calendarRef.value.getApi().render()
     }
   }, 100)
-
-  if (tasksStore.tasks.length === 0) {
-    tasksStore.fetchTasks()
-  }
 })
 </script>
 
