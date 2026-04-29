@@ -1,7 +1,30 @@
+# ──────────────────────────────────────────────────────────────
+# backend/.gitignore — ASP.NET Core / .NET
+# ──────────────────────────────────────────────────────────────
+
+# Build outputs
 bin/
 obj/
+
+# User-specific Visual Studio files
 *.user
+.vs/
+*.DotSettings.user
+
+# SQLite (dev scratch DB — production uses PostgreSQL/Neon)
 *.db
 *.db-shm
 *.db-wal
+
+# Local configuration — contains secrets (connection strings, Auth0, …)
+# Template is appsettings.json ; real values go here, never committed
 appsettings.Development.json
+appsettings.Production.json
+
+# NuGet
+*.nupkg
+*.snupkg
+.nuget/
+
+# Publish output
+publish/
