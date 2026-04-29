@@ -80,6 +80,19 @@
           {{ item.finishAt ? formatDate(item.finishAt) : '—' }}
         </template>
 
+        <template #item.tags="{ item }">
+          <div class="d-flex flex-wrap gap-1 py-1">
+            <v-chip
+              v-for="tag in item.tags"
+              :key="tag"
+              size="x-small"
+              variant="tonal"
+              color="primary"
+            >{{ tag }}</v-chip>
+            <span v-if="item.tags.length === 0" class="text-medium-emphasis text-caption">—</span>
+          </div>
+        </template>
+
         <template #item.status="{ item }">
           <v-chip
             :color="item.finishAt ? 'success' : 'warning'"
@@ -171,6 +184,21 @@
             label="Terminé le (optionnel)"
             type="date"
             :disabled="isCreating"
+            class="mb-4"
+          />
+
+          <v-combobox
+            v-model="newTaskTags"
+            :items="allExistingTags"
+            label="Tags"
+            placeholder="Sélectionner ou créer des tags…"
+            multiple
+            chips
+            closable-chips
+            clearable
+            :disabled="isCreating"
+            hint="Appuyer sur Entrée pour créer un nouveau tag"
+            persistent-hint
           />
         </v-card-text>
         <v-card-actions>
@@ -193,7 +221,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
@@ -205,14 +233,25 @@ const isModalOpen = ref(false)
 const newTaskTitle = ref('')
 const newTaskDuration = ref(1)
 const newTaskFinishAt = ref('')
+const newTaskTags = ref<string[]>([])
 const isCreating = ref(false)
 
+// Tous les tags déjà utilisés dans les tâches existantes (dédupliqués, triés)
+const allExistingTags = computed(() => {
+  const set = new Set<string>()
+  for (const task of tasks.value) {
+    for (const tag of task.tags) set.add(tag)
+  }
+  return [...set].sort()
+})
+
 const tableHeaders = [
-  { title: 'Tâche', key: 'title', width: '40%' },
-  { title: 'Créé le', key: 'createdAt', width: '20%' },
-  { title: 'Terminé le', key: 'finishAt', width: '20%' },
+  { title: 'Tâche', key: 'title', width: '35%' },
+  { title: 'Tags', key: 'tags', width: '20%', sortable: false },
+  { title: 'Créé le', key: 'createdAt', width: '15%' },
+  { title: 'Terminé le', key: 'finishAt', width: '15%' },
   { title: 'Statut', key: 'status', width: '10%' },
-  { title: 'Actions', key: 'actions', width: '10%', sortable: false }
+  { title: 'Actions', key: 'actions', width: '5%', sortable: false }
 ]
 
 const formatDate = (dateString: string) => {
@@ -228,6 +267,7 @@ const openModal = () => {
   newTaskTitle.value = ''
   newTaskDuration.value = 1
   newTaskFinishAt.value = ''
+  newTaskTags.value = []
   isModalOpen.value = true
 }
 
@@ -236,6 +276,7 @@ const closeModal = () => {
   newTaskTitle.value = ''
   newTaskDuration.value = 1
   newTaskFinishAt.value = ''
+  newTaskTags.value = []
 }
 
 const createTask = async () => {
@@ -246,7 +287,9 @@ const createTask = async () => {
     await tasksStore.addTask(
       newTaskTitle.value,
       newTaskDuration.value,
-      newTaskFinishAt.value || null
+      null,
+      newTaskFinishAt.value || null,
+      newTaskTags.value
     )
     closeModal()
   } catch (error) {
