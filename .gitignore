@@ -19,3 +19,6 @@ ehthumbs.db
 
 # Crash / debug
 *.stackdump
+
+# Infrastructure secrets
+infra/.env
