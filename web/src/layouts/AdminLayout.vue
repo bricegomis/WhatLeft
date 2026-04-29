@@ -48,11 +48,7 @@
 
             <v-btn variant="text" block class="justify-start" to="/users">
               <v-icon start>mdi-account</v-icon> Profil
-            </v-btn>
-
-            <v-btn variant="text" block class="justify-start" to="/settings">
-              <v-icon start>mdi-cog</v-icon> Paramètres
-            </v-btn>
+            </v-btn>           
 
             <v-btn variant="text" block class="justify-start" @click="handleLogout">
               <v-icon start>mdi-logout</v-icon> Déconnexion
@@ -122,13 +118,11 @@ const search = ref('')
 const avatarUrl = computed(() => gravatarUrl(user.value?.email, 80))
 
 const handleLogout = () =>
-  logout({ logoutParams: { returnTo: window.location.origin + '/login' } });
+  logout({ logoutParams: { returnTo: window.location.origin } });
 const menuItems = [
   { title: 'Tableau de bord', icon: 'mdi-view-dashboard', path: '/' },
   { title: 'Tâches', icon: 'mdi-check-circle-outline', path: '/tasks' },
   { title: 'Calendrier', icon: 'mdi-calendar', path: '/calendar' },
-  { title: 'Utilisateurs', icon: 'mdi-account-group', path: '/users' },
-  { title: 'Paramètres', icon: 'mdi-cog', path: '/settings' },
 ]
 
 const route = useRoute()
