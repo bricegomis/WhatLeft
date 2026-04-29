@@ -27,7 +27,8 @@
         <template #activator="{ props }">
           <v-btn icon v-bind="props">
             <v-avatar size="40" color="primary">
-              <span class="text-white font-weight-bold">A</span>
+              <v-img v-if="user?.picture" :src="user.picture" :alt="user?.name" />
+              <span v-else class="text-white font-weight-bold">{{ userInitial }}</span>
             </v-avatar>
           </v-btn>
         </template>
@@ -36,27 +37,26 @@
           <v-card-text>
             <div class="d-flex align-center mb-3">
               <v-avatar size="48" color="primary" class="mr-3">
-                <span class="text-white font-weight-bold">A</span>
+                <v-img v-if="user?.picture" :src="user.picture" :alt="user?.name" />
+                <span v-else class="text-white font-weight-bold">{{ userInitial }}</span>
               </v-avatar>
               <div>
-                <div class="text-h6">Administrateur</div>
-                <div class="text-body-2 text-medium-emphasis">
-                  whatleft@example.com
-                </div>
+                <div class="text-h6">{{ user?.name }}</div>
+                <div class="text-body-2 text-medium-emphasis">{{ user?.email }}</div>
               </div>
             </div>
 
             <v-divider class="my-3" />
 
-            <v-btn variant="text" block class="justify-start">
+            <v-btn variant="text" block class="justify-start" to="/users">
               <v-icon start>mdi-account</v-icon> Profil
             </v-btn>
 
-            <v-btn variant="text" block class="justify-start">
+            <v-btn variant="text" block class="justify-start" to="/settings">
               <v-icon start>mdi-cog</v-icon> Paramètres
             </v-btn>
 
-            <v-btn variant="text" block class="justify-start">
+            <v-btn variant="text" block class="justify-start" @click="handleLogout">
               <v-icon start>mdi-logout</v-icon> Déconnexion
             </v-btn>
           </v-card-text>
@@ -92,12 +92,11 @@
       <template #append>
         <v-divider />
         <v-list nav dense>
-          <v-subheader class="text-caption">Support</v-subheader>
-          <v-list-item to="/login">
+          <v-list-item @click="handleLogout">
             <template #prepend>
-              <v-icon>mdi-login</v-icon>
+              <v-icon>mdi-logout</v-icon>
             </template>
-            <v-list-item-title>Se connecter</v-list-item-title>
+            <v-list-item-title>Déconnexion</v-list-item-title>
           </v-list-item>
         </v-list>
       </template>
@@ -114,11 +113,18 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
+import { computed } from 'vue'
 import { useRoute } from 'vue-router'
+import { useAuth0 } from '@auth0/auth0-vue'
 
+const { user, logout } = useAuth0()
 const drawer = ref(true)
 const search = ref('')
 
+const userInitial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?')
+
+const handleLogout = () =>
+  logout({ logoutParams: { returnTo: window.location.origin + '/login' } });
 const menuItems = [
   { title: 'Tableau de bord', icon: 'mdi-view-dashboard', path: '/' },
   { title: 'Tâches', icon: 'mdi-check-circle-outline', path: '/tasks' },
