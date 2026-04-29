@@ -1,0 +1,51 @@
+services:
+
+  # ── Backend ─────────────────────────────────────────────────────────────────
+  api:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    environment:
+      # ASP.NET Core
+      - ASPNETCORE_ENVIRONMENT=Production
+      # Auth0 (maps to Configuration["Auth0:Domain"] etc.)
+      - Auth0__Domain=${AUTH0_DOMAIN}
+      - Auth0__Audience=${AUTH0_AUDIENCE}
+      - Auth0__ClientId=${AUTH0_CLIENT_ID}
+      # PostgreSQL / Neon
+      - ConnectionStrings__Tasks=${DB_CONNECTION_STRING}
+      # CORS — must match the public frontend URL
+      - Cors__AllowedOrigin=${FRONTEND_URL}
+    networks:
+      - proxy
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--spider", "http://localhost:8080/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+  # ── Frontend ────────────────────────────────────────────────────────────────
+  web:
+    build:
+      context: ../clients/web
+      dockerfile: Dockerfile
+      args:
+        # Baked in at build time — must be public-facing URLs
+        VITE_API_BASE_URL: ${API_URL}
+        VITE_AUTH0_DOMAIN: ${AUTH0_DOMAIN}
+        VITE_AUTH0_CLIENT_ID: ${AUTH0_CLIENT_ID}
+        VITE_AUTH0_AUDIENCE: ${AUTH0_AUDIENCE}
+    networks:
+      - proxy
+    restart: unless-stopped
+    depends_on:
+      api:
+        condition: service_healthy
+
+# ── Network ─────────────────────────────────────────────────────────────────
+# Must be created on the host before deploying:  docker network create proxy
+networks:
+  proxy:
+    external: true
