@@ -32,7 +32,7 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
                 .HasConversion(
                     v => string.Join(',', v),
                     v => v.Length == 0
-                        ? []
+                        ? new List<string>()
                         : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
 
             // DomainEvents is a transient in-memory collection, never persisted
