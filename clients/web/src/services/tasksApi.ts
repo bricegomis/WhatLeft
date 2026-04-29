@@ -16,8 +16,13 @@ function authHeaders(): HeadersInit {
 
 export class TasksApiService {
   static async checkHealth(): Promise<boolean> {
-    const response = await fetch(`${API_BASE_URL}`)
-    return response.ok
+    try {
+      // A 401 means the API is up but needs authentication — not a health failure
+      const response = await fetch(`${API_BASE_URL}/tasks`, { headers: authHeaders() })
+      return response.ok || response.status === 401
+    } catch {
+      return false
+    }
   }
 
   static async fetchTasks(): Promise<Task[]> {
@@ -44,7 +49,7 @@ export class TasksApiService {
 
   static async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
     const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: authHeaders(),
       body: JSON.stringify(updates)
     })

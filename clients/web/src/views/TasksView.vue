@@ -41,7 +41,7 @@
       type="error"
       class="mb-6"
     >
-      Le backend de l'API n'est pas disponible. Démarrez le serveur dans le dossier <code>api/</code>.
+      Le backend de l'API n'est pas disponible. Démarrez le serveur dans le dossier <code>backend/</code>.
     </v-alert>
 
     <!-- Loading State -->

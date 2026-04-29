@@ -89,7 +89,7 @@ export const useTasksStore = defineStore('tasks', {
       const task = this.tasks.find((item) => item.id === id)
       if (!task) return
 
-      const newFinishAt = task.finishAt ? null : new Date().toISOString().slice(0, 10)
+      const newFinishAt = task.finishAt ? null : new Date().toISOString()
       const originalFinishAt = task.finishAt
 
       task.finishAt = newFinishAt
