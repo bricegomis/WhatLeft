@@ -1,4 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import { authGuard } from '@auth0/auth0-vue'
 import DashboardView from '../views/DashboardView.vue'
 import UsersView from '../views/UsersView.vue'
 import SettingsView from '../views/SettingsView.vue'
@@ -7,12 +8,12 @@ import CalendarView from '../views/CalendarView.vue'
 import LoginView from '../views/LoginView.vue'
 
 const routes = [
-  { path: '/', name: 'Dashboard', component: DashboardView },
-  { path: '/tasks', name: 'Tasks', component: TasksView },
-  { path: '/calendar', name: 'Calendar', component: CalendarView },
-  { path: '/users', name: 'Users', component: UsersView },
-  { path: '/settings', name: 'Settings', component: SettingsView },
-  { path: '/login', name: 'Login', component: LoginView }
+  { path: '/login', name: 'Login', component: LoginView },
+  { path: '/', name: 'Dashboard', component: DashboardView, beforeEnter: authGuard },
+  { path: '/tasks', name: 'Tasks', component: TasksView, beforeEnter: authGuard },
+  { path: '/calendar', name: 'Calendar', component: CalendarView, beforeEnter: authGuard },
+  { path: '/users', name: 'Users', component: UsersView, beforeEnter: authGuard },
+  { path: '/settings', name: 'Settings', component: SettingsView, beforeEnter: authGuard },
 ]
 
 const router = createRouter({

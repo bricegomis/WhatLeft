@@ -2,6 +2,18 @@ import type { Task } from '../stores/tasks'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
 
+let authToken: string | null = null
+
+export function setAuthToken(token: string | null) {
+  authToken = token
+}
+
+function authHeaders(): HeadersInit {
+  return authToken
+    ? { 'Content-Type': 'application/json', Authorization: `Bearer ${authToken}` }
+    : { 'Content-Type': 'application/json' }
+}
+
 export class TasksApiService {
   static async checkHealth(): Promise<boolean> {
     const response = await fetch(`${API_BASE_URL}`)
@@ -9,7 +21,9 @@ export class TasksApiService {
   }
 
   static async fetchTasks(): Promise<Task[]> {
-    const response = await fetch(`${API_BASE_URL}/tasks`)
+    const response = await fetch(`${API_BASE_URL}/tasks`, {
+      headers: authHeaders()
+    })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
@@ -19,9 +33,7 @@ export class TasksApiService {
   static async createTask(data: { title: string; duration: number; startAt: string | null; finishAt: string | null; tags?: string[] }): Promise<Task> {
     const response = await fetch(`${API_BASE_URL}/tasks`, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: authHeaders(),
       body: JSON.stringify(data)
     })
     if (!response.ok) {
@@ -33,9 +45,7 @@ export class TasksApiService {
   static async updateTask(id: string, updates: Partial<Task>): Promise<Task> {
     const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
       method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json'
-      },
+      headers: authHeaders(),
       body: JSON.stringify(updates)
     })
     if (!response.ok) {
@@ -46,7 +56,8 @@ export class TasksApiService {
 
   static async deleteTask(id: string): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/tasks/${id}`, {
-      method: 'DELETE'
+      method: 'DELETE',
+      headers: authToken ? { Authorization: `Bearer ${authToken}` } : {}
     })
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`)
