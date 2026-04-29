@@ -6,8 +6,7 @@ Task management app. Vue 3 frontend + ASP.NET Core 10 API (modular DDD) + Postgr
 
 ```
 web/          → Vue 3 + Vite + Vuetify + Pinia frontend (port 5173)
-api/          → Legacy Node.js/Express (retired, do not use)
-dotnet-api/   → ASP.NET Core 10 API (port 5000) ← active backend
+api/          → ASP.NET Core 10 API (port 5000) ← active backend
 ```
 
 ## Commands
@@ -26,7 +25,7 @@ dotnet run --project src/WhatLeft.Api    # http://localhost:5000
 dotnet build
 ```
 
-### EF Core migrations (from dotnet-api/)
+### EF Core migrations (from api/)
 ```bash
 # New migration after entity changes
 dotnet ef migrations add <Name> --project src/Modules/Tasks/WhatLeft.Tasks.Infrastructure --startup-project src/WhatLeft.Api
@@ -48,7 +47,7 @@ VITE_API_BASE_URL=http://localhost:5000
 PORT=5173
 ```
 
-**dotnet-api/src/WhatLeft.Api/appsettings.Development.json** (gitignored, create locally):
+**api/src/WhatLeft.Api/appsettings.Development.json** (gitignored, create locally):
 ```json
 {
   "Auth0": {
@@ -79,11 +78,11 @@ src/WhatLeft.Api/
 **Adding a new module**: replicate the Tasks module pattern, add 3 lines in `Program.cs`.
 
 ### Key files
-- [TaskItem.cs](dotnet-api/src/Modules/Tasks/WhatLeft.Tasks.Domain/Entities/TaskItem.cs) — aggregate root, all business rules here
-- [TaskService.cs](dotnet-api/src/Modules/Tasks/WhatLeft.Tasks.Application/UseCases/TaskService.cs) — saves then dispatches domain events via MediatR
-- [TasksDbContext.cs](dotnet-api/src/Modules/Tasks/WhatLeft.Tasks.Infrastructure/Persistence/TasksDbContext.cs) — schema `"tasks"`, Tags stored as comma-separated string
-- [Program.cs](dotnet-api/src/WhatLeft.Api/Program.cs) — JWT Bearer (Auth0) + CORS + OpenAPI (Scalar) + `db.Database.Migrate()` on startup
-- [TasksEndpoints.cs](dotnet-api/src/WhatLeft.Api/Modules/Tasks/TasksEndpoints.cs) — Minimal API, all routes require `.RequireAuthorization()`
+- [TaskItem.cs](api/src/Modules/Tasks/WhatLeft.Tasks.Domain/Entities/TaskItem.cs) — aggregate root, all business rules here
+- [TaskService.cs](api/src/Modules/Tasks/WhatLeft.Tasks.Application/UseCases/TaskService.cs) — saves then dispatches domain events via MediatR
+- [TasksDbContext.cs](api/src/Modules/Tasks/WhatLeft.Tasks.Infrastructure/Persistence/TasksDbContext.cs) — schema `"tasks"`, Tags stored as comma-separated string
+- [Program.cs](api/src/WhatLeft.Api/Program.cs) — JWT Bearer (Auth0) + CORS + OpenAPI (Scalar) + `db.Database.Migrate()` on startup
+- [TasksEndpoints.cs](api/src/WhatLeft.Api/Modules/Tasks/TasksEndpoints.cs) — Minimal API, all routes require `.RequireAuthorization()`
 
 ## Frontend conventions
 
