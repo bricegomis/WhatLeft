@@ -51,8 +51,16 @@ if (app.Environment.IsDevelopment())
 {
     // OpenAPI spec: GET /openapi/v1.json
     app.MapOpenApi();
-    // Scalar UI: http://localhost:<port>/scalar/v1
-    app.MapScalarApiReference();
+    // Scalar UI: http://localhost:5000/scalar/v1
+    app.MapScalarApiReference(options => options
+        .AddPreferredSecuritySchemes("Auth0")
+        .AddAuthorizationCodeFlow("Auth0", flow =>
+        {
+            flow.ClientId = builder.Configuration["Auth0:ClientId"] ?? string.Empty;
+            flow.Pkce = Pkce.Sha256;
+        })
+        .WithPersistentAuthentication()
+    );
 }
 
 app.UseCors();

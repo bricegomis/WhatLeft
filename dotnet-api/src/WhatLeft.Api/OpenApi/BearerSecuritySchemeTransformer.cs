@@ -6,12 +6,12 @@ using Microsoft.OpenApi;
 namespace WhatLeft.Api.OpenApi;
 
 /// <summary>
-/// Adds a Bearer JWT security scheme to the OpenAPI document and marks every
-/// protected operation as requiring it.
-/// Registered via: builder.Services.AddOpenApi(o => o.AddDocumentTransformer&lt;BearerSecuritySchemeTransformer&gt;())
+/// Declares the Auth0 OAuth2 Authorization Code + PKCE scheme in the OpenAPI document
+/// and marks every protected operation as requiring it.
 /// </summary>
 internal sealed class BearerSecuritySchemeTransformer(
-    IAuthenticationSchemeProvider authenticationSchemeProvider) : IOpenApiDocumentTransformer
+    IAuthenticationSchemeProvider authenticationSchemeProvider,
+    IConfiguration configuration) : IOpenApiDocumentTransformer
 {
     public async Task TransformAsync(
         OpenApiDocument document,
@@ -23,16 +23,30 @@ internal sealed class BearerSecuritySchemeTransformer(
         if (!schemes.Any(s => s.Name == JwtBearerDefaults.AuthenticationScheme))
             return;
 
+        var domain = configuration["Auth0:Domain"]!;
+        var audience = configuration["Auth0:Audience"]!;
+
         document.Components ??= new OpenApiComponents();
         document.Components.SecuritySchemes = new Dictionary<string, IOpenApiSecurityScheme>
         {
-            ["Bearer"] = new OpenApiSecurityScheme
+            ["Auth0"] = new OpenApiSecurityScheme
             {
-                Type = SecuritySchemeType.Http,
-                Scheme = "bearer",
-                BearerFormat = "JWT",
-                In = ParameterLocation.Header,
-                Description = "Enter your Auth0 JWT access token."
+                Type = SecuritySchemeType.OAuth2,
+                Flows = new OpenApiOAuthFlows
+                {
+                    AuthorizationCode = new OpenApiOAuthFlow
+                    {
+                        // Auth0 requires the audience param to issue a JWT scoped to our API
+                        AuthorizationUrl = new Uri($"https://{domain}/authorize?audience={Uri.EscapeDataString(audience)}"),
+                        TokenUrl = new Uri($"https://{domain}/oauth/token"),
+                        Scopes = new Dictionary<string, string>
+                        {
+                            ["openid"]  = "OpenID Connect",
+                            ["profile"] = "User profile",
+                            ["email"]   = "User email"
+                        }
+                    }
+                }
             }
         };
 
@@ -41,7 +55,7 @@ internal sealed class BearerSecuritySchemeTransformer(
             operation.Value.Security ??= [];
             operation.Value.Security.Add(new OpenApiSecurityRequirement
             {
-                [new OpenApiSecuritySchemeReference("Bearer", document)] = []
+                [new OpenApiSecuritySchemeReference("Auth0", document)] = ["openid", "profile", "email"]
             });
         }
     }
