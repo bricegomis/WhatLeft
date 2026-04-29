@@ -5,27 +5,30 @@ Task management app. Vue 3 frontend + ASP.NET Core 10 API (modular DDD) + Postgr
 ## Workspace layout
 
 ```
-web/          → Vue 3 + Vite + Vuetify + Pinia frontend (port 5173)
-api/          → ASP.NET Core 10 API (port 5000) ← active backend
+backend/      → ASP.NET Core 10 API (port 5000) ← active backend
+clients/
+  web/        → Vue 3 + Vite + Vuetify + Pinia frontend (port 5173)
+  mobile/     → Futur client mobile (placeholder)
+infra/        → Docker, CI/CD, scripts de déploiement (placeholder)
 ```
 
 ## Commands
 
 ### Frontend
 ```bash
-cd web
+cd clients/web
 npm run dev       # http://localhost:5173
 npm run build     # vue-tsc -b && vite build
 ```
 
 ### API
 ```bash
-cd dotnet-api
+cd backend
 dotnet run --project src/WhatLeft.Api    # http://localhost:5000
 dotnet build
 ```
 
-### EF Core migrations (from api/)
+### EF Core migrations (from backend/)
 ```bash
 # New migration after entity changes
 dotnet ef migrations add <Name> --project src/Modules/Tasks/WhatLeft.Tasks.Infrastructure --startup-project src/WhatLeft.Api
@@ -38,7 +41,7 @@ Install tool once: `dotnet tool install --global dotnet-ef`
 
 ## Environment setup
 
-**web/.env** (copy from web/.env.example if missing):
+**clients/web/.env** (copy from clients/web/.env.example if missing):
 ```
 VITE_AUTH0_DOMAIN=dev-frvj0skig142mzhh.eu.auth0.com
 VITE_AUTH0_CLIENT_ID=VudQOhonXNUNVMMEBwwVCOpTta8bZ2bC
@@ -47,7 +50,7 @@ VITE_API_BASE_URL=http://localhost:5000
 PORT=5173
 ```
 
-**api/src/WhatLeft.Api/appsettings.Development.json** (gitignored, create locally):
+**backend/src/WhatLeft.Api/appsettings.Development.json** (gitignored, create locally):
 ```json
 {
   "Auth0": {
@@ -78,20 +81,20 @@ src/WhatLeft.Api/
 **Adding a new module**: replicate the Tasks module pattern, add 3 lines in `Program.cs`.
 
 ### Key files
-- [TaskItem.cs](api/src/Modules/Tasks/WhatLeft.Tasks.Domain/Entities/TaskItem.cs) — aggregate root, all business rules here
-- [TaskService.cs](api/src/Modules/Tasks/WhatLeft.Tasks.Application/UseCases/TaskService.cs) — saves then dispatches domain events via MediatR
-- [TasksDbContext.cs](api/src/Modules/Tasks/WhatLeft.Tasks.Infrastructure/Persistence/TasksDbContext.cs) — schema `"tasks"`, Tags stored as comma-separated string
-- [Program.cs](api/src/WhatLeft.Api/Program.cs) — JWT Bearer (Auth0) + CORS + OpenAPI (Scalar) + `db.Database.Migrate()` on startup
-- [TasksEndpoints.cs](api/src/WhatLeft.Api/Modules/Tasks/TasksEndpoints.cs) — Minimal API, all routes require `.RequireAuthorization()`
+- [TaskItem.cs](backend/src/Modules/Tasks/WhatLeft.Tasks.Domain/Entities/TaskItem.cs) — aggregate root, all business rules here
+- [TaskService.cs](backend/src/Modules/Tasks/WhatLeft.Tasks.Application/UseCases/TaskService.cs) — saves then dispatches domain events via MediatR
+- [TasksDbContext.cs](backend/src/Modules/Tasks/WhatLeft.Tasks.Infrastructure/Persistence/TasksDbContext.cs) — schema `"tasks"`, Tags stored as comma-separated string
+- [Program.cs](backend/src/WhatLeft.Api/Program.cs) — JWT Bearer (Auth0) + CORS + OpenAPI (Scalar) + `db.Database.Migrate()` on startup
+- [TasksEndpoints.cs](backend/src/WhatLeft.Api/Modules/Tasks/TasksEndpoints.cs) — Minimal API, all routes require `.RequireAuthorization()`
 
 ## Frontend conventions
 
-- State: Pinia store at [stores/tasks.ts](web/src/stores/tasks.ts) — Task interface has `tags: string[]`
-- Auth: [App.vue](web/src/App.vue) fetches token silently → [tasksApi.ts](web/src/services/tasksApi.ts) `setAuthToken()`
+- State: Pinia store at [stores/tasks.ts](clients/web/src/stores/tasks.ts) — Task interface has `tags: string[]`
+- Auth: [App.vue](clients/web/src/App.vue) fetches token silently → [tasksApi.ts](clients/web/src/services/tasksApi.ts) `setAuthToken()`
 - Auth guard: all routes except `/login` use `authGuard` from `@auth0/auth0-vue`
 
 ### FullCalendar (critical)
-Events **must** be inside the `calendarOptions` computed property — never as a separate `:events` prop. See [CalendarView.vue](web/src/views/CalendarView.vue).
+Events **must** be inside the `calendarOptions` computed property — never as a separate `:events` prop. See [CalendarView.vue](clients/web/src/views/CalendarView.vue).
 
 ## Data conventions
 

@@ -17,7 +17,17 @@ dist-ssr/
 *.suo
 *.ntvs*
 *.njsproj
-*.sln
+
+# .NET build outputs
+bin/
+obj/
+*.user
+*.db
+*.db-shm
+*.db-wal
+
+# ASP.NET Core secrets (gitignored per folder, also cover root-level)
+appsettings.Development.json
 *.sw?
 
 # Logs
