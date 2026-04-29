@@ -26,9 +26,8 @@
       <v-menu>
         <template #activator="{ props }">
           <v-btn icon v-bind="props">
-            <v-avatar size="40" color="primary">
-              <v-img v-if="user?.picture" :src="user.picture" :alt="user?.name" />
-              <span v-else class="text-white font-weight-bold">{{ userInitial }}</span>
+            <v-avatar size="40">
+              <v-img :src="avatarUrl" :alt="user?.name" />
             </v-avatar>
           </v-btn>
         </template>
@@ -36,9 +35,8 @@
         <v-card width="260">
           <v-card-text>
             <div class="d-flex align-center mb-3">
-              <v-avatar size="48" color="primary" class="mr-3">
-                <v-img v-if="user?.picture" :src="user.picture" :alt="user?.name" />
-                <span v-else class="text-white font-weight-bold">{{ userInitial }}</span>
+              <v-avatar size="48" class="mr-3">
+                <v-img :src="avatarUrl" :alt="user?.name" />
               </v-avatar>
               <div>
                 <div class="text-h6">{{ user?.name }}</div>
@@ -112,16 +110,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { computed } from 'vue'
+import { ref, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
+import { gravatarUrl } from '../composables/useGravatar'
 
 const { user, logout } = useAuth0()
 const drawer = ref(true)
 const search = ref('')
 
-const userInitial = computed(() => user.value?.name?.charAt(0).toUpperCase() ?? '?')
+const avatarUrl = computed(() => gravatarUrl(user.value?.email, 80))
 
 const handleLogout = () =>
   logout({ logoutParams: { returnTo: window.location.origin + '/login' } });

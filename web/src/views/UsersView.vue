@@ -15,8 +15,7 @@
       <v-col cols="12" md="4">
         <v-card class="pa-4 text-center">
           <v-avatar size="96" class="mb-4">
-            <v-img v-if="user?.picture" :src="user.picture" :alt="user.name" />
-            <v-icon v-else size="64" color="primary">mdi-account-circle</v-icon>
+            <v-img :src="avatarUrl" :alt="user?.name" />
           </v-avatar>
           <div class="text-h6 font-weight-bold">{{ user?.name }}</div>
           <div class="text-body-2 text-medium-emphasis mb-4">{{ user?.email }}</div>
@@ -60,9 +59,12 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useAuth0 } from '@auth0/auth0-vue'
+import { gravatarUrl } from '../composables/useGravatar'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const { user } = useAuth0()
+
+const avatarUrl = computed(() => gravatarUrl(user.value?.email, 192))
 
 const profileFields = computed(() => [
   { label: 'Identifiant', value: user.value?.sub, icon: 'mdi-identifier' },

@@ -16,6 +16,7 @@
     "@fullcalendar/timegrid": "^6.1.15",
     "@fullcalendar/vue3": "^6.1.15",
     "@mdi/font": "^7.4.47",
+    "js-md5": "^0.8.3",
     "pinia": "^3.0.4",
     "vue": "^3.5.32",
     "vue-router": "^4.3.2",
