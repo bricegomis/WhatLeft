@@ -1,0 +1,42 @@
+using Microsoft.EntityFrameworkCore;
+using WhatLeft.Tasks.Domain.Entities;
+
+namespace WhatLeft.Tasks.Infrastructure.Persistence;
+
+/// <summary>
+/// EF Core DbContext scoped to the Tasks module.
+/// HasDefaultSchema("tasks") isolates this module's tables — transparent on SQLite,
+/// enforced as a real schema on PostgreSQL when migrating to production.
+/// </summary>
+public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : DbContext(options)
+{
+    public DbSet<TaskItem> Tasks => Set<TaskItem>();
+
+    protected override void OnModelCreating(ModelBuilder modelBuilder)
+    {
+        // Schema isolation: each module owns its schema (no cross-module FK)
+        modelBuilder.HasDefaultSchema("tasks");
+
+        modelBuilder.Entity<TaskItem>(entity =>
+        {
+            entity.ToTable("tasks");
+            entity.HasKey(t => t.Id);
+
+            entity.Property(t => t.Id).ValueGeneratedNever();
+            entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
+            entity.Property(t => t.Duration).IsRequired();
+            entity.Property(t => t.CreatedAt).IsRequired();
+
+            // Tags stored as comma-separated string (simple, avoids join table for now)
+            entity.Property(t => t.Tags)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Length == 0
+                        ? []
+                        : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+
+            // DomainEvents is a transient in-memory collection, never persisted
+            entity.Ignore(t => t.DomainEvents);
+        });
+    }
+}
