@@ -7,6 +7,8 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
     environment:
       ASPNETCORE_ENVIRONMENT: Production
 
@@ -27,6 +29,8 @@ services:
     restart: unless-stopped
     networks:
       - proxy
+    labels:
+      - "com.centurylinklabs.watchtower.enable=true"
 
 networks:
   proxy:
