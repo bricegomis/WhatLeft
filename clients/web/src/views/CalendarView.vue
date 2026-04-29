@@ -153,13 +153,13 @@ const calendarOptions = computed(() => ({
   editable: true,
   droppable: true,
   events: tasksStore.scheduledTasks.map(task => {
-    const startDate = new Date(task.startAt || '')
+    const startDate = new Date(task.startAt as string)
     const endDate = new Date(startDate.getTime() + task.duration * 60 * 60 * 1000)
     
     return {
       id: task.id,
       title: task.title,
-      start: task.startAt,
+      start: task.startAt as string,
       end: endDate.toISOString(),
       extendedProps: {
         finishAt: task.finishAt,
@@ -272,7 +272,7 @@ onMounted(async () => {
   await nextTick()
   
   // Initialize Draggable for external events
-  const containerEl = document.querySelector('.task-list-container')
+  const containerEl = document.querySelector('.task-list-container') as HTMLElement | null
   if (containerEl) {
     new Draggable(containerEl, {
       itemSelector: '.fc-event',
