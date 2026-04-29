@@ -1,5 +1,7 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Scalar.AspNetCore;
 using WhatLeft.Api.Modules.Tasks;
+using WhatLeft.Api.OpenApi;
 using WhatLeft.Tasks.Application;
 using WhatLeft.Tasks.Infrastructure;
 using WhatLeft.Tasks.Infrastructure.Persistence;
@@ -29,20 +31,10 @@ builder.Services.AddCors(options =>
 builder.Services.AddTasksApplication();
 builder.Services.AddTasksInfrastructure(builder.Configuration);
 
-// ── OpenAPI ───────────────────────────────────────────────────────────────────
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen(c =>
+// ── OpenAPI (native .NET 10 + Scalar UI) ─────────────────────────────────────
+builder.Services.AddOpenApi(options =>
 {
-    c.AddSecurityDefinition("Bearer", new()
-    {
-        Type = Microsoft.OpenApi.Models.SecuritySchemeType.Http,
-        Scheme = "bearer",
-        BearerFormat = "JWT"
-    });
-    c.AddSecurityRequirement(new()
-    {
-        [new() { Reference = new() { Type = Microsoft.OpenApi.Models.ReferenceType.SecurityScheme, Id = "Bearer" } }] = []
-    });
+    options.AddDocumentTransformer<BearerSecuritySchemeTransformer>();
 });
 
 var app = builder.Build();
@@ -57,8 +49,10 @@ using (var scope = app.Services.CreateScope())
 // ── Middleware ────────────────────────────────────────────────────────────────
 if (app.Environment.IsDevelopment())
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    // OpenAPI spec: GET /openapi/v1.json
+    app.MapOpenApi();
+    // Scalar UI: http://localhost:<port>/scalar/v1
+    app.MapScalarApiReference();
 }
 
 app.UseCors();
