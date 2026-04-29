@@ -13,7 +13,7 @@ public static class Extensions
         IConfiguration configuration)
     {
         services.AddDbContext<TasksDbContext>(options =>
-            options.UseSqlite(configuration.GetConnectionString("Tasks")));
+            options.UseNpgsql(configuration.GetConnectionString("Tasks")));
 
         services.AddScoped<ITaskRepository, TaskRepository>();
 

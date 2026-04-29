@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
 using WhatLeft.Api.Modules.Tasks;
 using WhatLeft.Api.OpenApi;
@@ -39,11 +40,11 @@ builder.Services.AddOpenApi(options =>
 
 var app = builder.Build();
 
-// ── DB: auto-create schema on startup (use EF migrations for production) ──────
+// ── DB: run pending migrations on startup ─────────────────────────────────────
 using (var scope = app.Services.CreateScope())
 {
     var db = scope.ServiceProvider.GetRequiredService<TasksDbContext>();
-    db.Database.EnsureCreated();
+    db.Database.Migrate();
 }
 
 // ── Middleware ────────────────────────────────────────────────────────────────

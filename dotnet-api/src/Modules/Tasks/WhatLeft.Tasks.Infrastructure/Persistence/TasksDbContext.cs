@@ -1,5 +1,5 @@
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 using WhatLeft.Tasks.Domain.Entities;
 
 namespace WhatLeft.Tasks.Infrastructure.Persistence;
@@ -12,25 +12,6 @@ namespace WhatLeft.Tasks.Infrastructure.Persistence;
 public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : DbContext(options)
 {
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
-
-    /// <summary>
-    /// SQLite does not support DateTimeOffset natively in ORDER BY / WHERE clauses.
-    /// This convention maps every DateTimeOffset property to a long (Unix ms UTC),
-    /// which sorts correctly and is fully portable to PostgreSQL later.
-    /// Remove this override once migrated to PostgreSQL.
-    /// </summary>
-    protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
-    {
-        // DateTimeOffset → long (Unix milliseconds, UTC)
-        configurationBuilder
-            .Properties<DateTimeOffset>()
-            .HaveConversion<DateTimeOffsetToTicksConverter>();
-
-        // DateTimeOffset? → long?
-        configurationBuilder
-            .Properties<DateTimeOffset?>()
-            .HaveConversion<DateTimeOffsetToTicksConverter>();
-    }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -53,7 +34,11 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
                     v => string.Join(',', v),
                     v => v.Length == 0
                         ? new List<string>()
-                        : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList());
+                        : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    new ValueComparer<List<string>>(
+                        (a, b) => a != null && b != null && a.SequenceEqual(b),
+                        v => v.Aggregate(0, (a, s) => HashCode.Combine(a, s.GetHashCode())),
+                        v => v.ToList()));
 
             // DomainEvents is a transient in-memory collection, never persisted
             entity.Ignore(t => t.DomainEvents);
