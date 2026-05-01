@@ -86,29 +86,15 @@ export const useTasksStore = defineStore('tasks', {
     },
 
     async toggleFinish(id: string) {
-      const taskIndex = this.tasks.findIndex((item) => item.id === id)
-      if (taskIndex === -1) return
+      const task = this.tasks.find((item) => item.id === id)
+      if (!task) return
 
-      const task = this.tasks[taskIndex]
       const newFinishAt = task.finishAt ? null : new Date().toISOString()
-
-      // Suppression optimiste si on termine la tâche
-      if (newFinishAt) {
-        this.tasks.splice(taskIndex, 1)
-      } else {
-        task.finishAt = null
-      }
 
       try {
         await TasksApiService.updateTask(id, { finishAt: newFinishAt })
+        await this.fetchTasks()
       } catch (error) {
-        // Rollback : remettre la tâche à sa place
-        if (newFinishAt) {
-          task.finishAt = null
-          this.tasks.splice(taskIndex, 0, task)
-        } else {
-          task.finishAt = newFinishAt
-        }
         this.error = error instanceof Error ? error.message : 'Erreur lors de la mise à jour de la tâche'
         console.error('Erreur dans toggleFinish:', error)
       }
