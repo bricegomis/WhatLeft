@@ -12,17 +12,6 @@
         <v-btn value="table" size="small" icon="mdi-table" />
         <v-btn value="cards" size="small" icon="mdi-view-grid" />
       </v-btn-toggle>
-
-      <v-btn
-        color="primary"
-        prepend-icon="mdi-plus"
-        @click="openModal"
-        :disabled="isLoading"
-        class="me-2"
-      >
-        <span class="d-none d-sm-inline">Nouvelle tâche</span>
-        <span class="d-sm-none">Nouvelle</span>
-      </v-btn>
     </template>
 
     <!-- Error Messages -->
@@ -379,6 +368,20 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+    <!-- FAB ajout tâche (toujours visible) -->
+    <v-btn
+      color="primary"
+      icon
+      size="large"
+      style="position: fixed; bottom: 28px; right: 28px; z-index: 1000;"
+      :disabled="isLoading"
+      @click="openModal"
+      elevation="4"
+    >
+      <v-icon size="28">mdi-plus</v-icon>
+      <v-tooltip activator="parent" location="start">Nouvelle tâche</v-tooltip>
+    </v-btn>
+
   </AdminLayout>
 </template>
 

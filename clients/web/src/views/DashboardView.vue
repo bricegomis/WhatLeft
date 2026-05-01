@@ -1,206 +1,143 @@
 <template>
   <AdminLayout>
-    <template #actions>
-      <v-btn
-        color="primary"
-        prepend-icon="mdi-plus"
-        class="me-2"
-      >
-        <span class="d-none d-sm-inline">Nouvelle action</span>
-      </v-btn>
-    </template>
-
-    <div>
-      <!-- Stats Cards -->
-      <v-row class="mb-6">
-        <v-col cols="12" md="4">
-          <v-card
-            class="pa-6"
-            elevation="2"
-          >
-            <div class="d-flex align-center">
-              <v-avatar
-                color="primary"
-                size="48"
-                class="me-4"
-              >
-                <v-icon color="white">mdi-currency-eur</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-h5 font-weight-bold">24 580 €</div>
-                <div class="text-body-2 text-medium-emphasis">
-                  +12 % par rapport à la semaine dernière
-                </div>
-              </div>
+    <v-row class="mb-4">
+      <!-- Tâches restantes aujourd'hui -->
+      <v-col cols="12" sm="6" md="4">
+        <v-card elevation="2" class="pa-6" :to="'/tasks'" style="cursor:pointer;">
+          <div class="d-flex align-center">
+            <v-avatar color="primary" size="56" class="me-4">
+              <v-icon color="white" size="28">mdi-calendar-today</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h4 font-weight-bold">{{ todayPending }}</div>
+              <div class="text-body-2 text-medium-emphasis">Tâches restantes aujourd'hui</div>
             </div>
-          </v-card>
-        </v-col>
+          </div>
+          <v-progress-linear
+            v-if="todayTotal > 0"
+            :model-value="todayProgress"
+            color="primary"
+            rounded
+            class="mt-4"
+            height="6"
+          />
+          <div v-if="todayTotal > 0" class="text-caption text-medium-emphasis mt-1">
+            {{ todayDone }} / {{ todayTotal }} terminées
+          </div>
+        </v-card>
+      </v-col>
 
-        <v-col cols="12" md="4">
-          <v-card
-            class="pa-6"
-            elevation="2"
-          >
-            <div class="d-flex align-center">
-              <v-avatar
-                color="success"
-                size="48"
-                class="me-4"
-              >
-                <v-icon color="white">mdi-account-plus</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-h5 font-weight-bold">1 240</div>
-                <div class="text-body-2 text-medium-emphasis">
-                  Nouveaux utilisateurs cette semaine
-                </div>
-              </div>
+      <!-- Tâches restantes cette semaine -->
+      <v-col cols="12" sm="6" md="4">
+        <v-card elevation="2" class="pa-6" :to="'/tasks'" style="cursor:pointer;">
+          <div class="d-flex align-center">
+            <v-avatar color="deep-purple" size="56" class="me-4">
+              <v-icon color="white" size="28">mdi-calendar-week</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h4 font-weight-bold">{{ weekPending }}</div>
+              <div class="text-body-2 text-medium-emphasis">Tâches restantes cette semaine</div>
             </div>
-          </v-card>
-        </v-col>
+          </div>
+          <v-progress-linear
+            v-if="weekTotal > 0"
+            :model-value="weekProgress"
+            color="deep-purple"
+            rounded
+            class="mt-4"
+            height="6"
+          />
+          <div v-if="weekTotal > 0" class="text-caption text-medium-emphasis mt-1">
+            {{ weekDone }} / {{ weekTotal }} terminées
+          </div>
+        </v-card>
+      </v-col>
 
-        <v-col cols="12" md="4">
-          <v-card
-            class="pa-6"
-            elevation="2"
-          >
-            <div class="d-flex align-center">
-              <v-avatar
-                color="warning"
-                size="48"
-                class="me-4"
-              >
-                <v-icon color="white">mdi-ticket-outline</v-icon>
-              </v-avatar>
-              <div>
-                <div class="text-h5 font-weight-bold">18</div>
-                <div class="text-body-2 text-medium-emphasis">
-                  Tickets ouverts
-                </div>
-              </div>
+      <!-- Toutes les tâches en attente -->
+      <v-col cols="12" sm="6" md="4">
+        <v-card elevation="2" class="pa-6" :to="'/tasks'" style="cursor:pointer;">
+          <div class="d-flex align-center">
+            <v-avatar color="orange" size="56" class="me-4">
+              <v-icon color="white" size="28">mdi-checkbox-marked-circle-outline</v-icon>
+            </v-avatar>
+            <div>
+              <div class="text-h4 font-weight-bold">{{ totalPending }}</div>
+              <div class="text-body-2 text-medium-emphasis">Tâches en attente au total</div>
             </div>
-          </v-card>
-        </v-col>
-      </v-row>
-
-      <!-- Recent Activity Table -->
-      <v-row>
-        <v-col cols="12">
-          <v-card
-            elevation="2"
-          >
-            <v-card-title class="d-flex align-center">
-              <v-icon start>mdi-history</v-icon>
-              Activité récente
-            </v-card-title>
-
-            <v-data-table
-              :headers="activityHeaders"
-              :items="recentActivities"
-              :items-per-page="5"
-              density="comfortable"
-              class="elevation-0"
-            >
-              <template v-slot:item.status="{ item }">
-                <v-chip
-                  :color="getStatusColor(item.status)"
-                  size="small"
-                  variant="flat"
-                >
-                  {{ item.status }}
-                </v-chip>
-              </template>
-
-              <template v-slot:item.timestamp="{ item }">
-                <span class="text-body-2">{{ formatDate(item.timestamp) }}</span>
-              </template>
-            </v-data-table>
-          </v-card>
-        </v-col>
-      </v-row>
-    </div>
+          </div>
+          <div class="text-caption text-medium-emphasis mt-4">
+            {{ totalMinutes }} min de travail planifiées
+          </div>
+        </v-card>
+      </v-col>
+    </v-row>
   </AdminLayout>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, onMounted } from 'vue'
+import { storeToRefs } from 'pinia'
 import AdminLayout from '../layouts/AdminLayout.vue'
+import { useTasksStore } from '../stores/tasks'
 
-// Activity table headers
-const activityHeaders = [
-  { title: 'Action', key: 'action', width: '40%' },
-  { title: 'Utilisateur', key: 'user', width: '30%' },
-  { title: 'Statut', key: 'status', width: '15%' },
-  { title: 'Date', key: 'timestamp', width: '15%' }
-]
+const tasksStore = useTasksStore()
+const { tasks } = storeToRefs(tasksStore)
 
-// Recent activities data
-const recentActivities = ref([
-  {
-    action: 'Mise à jour du financement',
-    user: 'Claire Martin',
-    status: 'Complété',
-    timestamp: new Date(Date.now() - 2 * 60 * 60 * 1000) // 2 hours ago
-  },
-  {
-    action: 'Ajout d\'un nouveau projet',
-    user: 'Romain Lacroix',
-    status: 'En attente',
-    timestamp: new Date(Date.now() - 4 * 60 * 60 * 1000) // 4 hours ago
-  },
-  {
-    action: 'Connexion API',
-    user: 'Sophie Dubois',
-    status: 'Complété',
-    timestamp: new Date(Date.now() - 6 * 60 * 60 * 1000) // 6 hours ago
-  },
-  {
-    action: 'Modification des paramètres',
-    user: 'Lucas Moreau',
-    status: 'En cours',
-    timestamp: new Date(Date.now() - 8 * 60 * 60 * 1000) // 8 hours ago
-  },
-  {
-    action: 'Rapport généré',
-    user: 'Emma Petit',
-    status: 'Complété',
-    timestamp: new Date(Date.now() - 12 * 60 * 60 * 1000) // 12 hours ago
-  }
-])
+onMounted(() => {
+  if (tasks.value.length === 0) tasksStore.fetchTasks()
+})
 
-// Helper functions
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'Complété':
-      return 'success'
-    case 'En attente':
-      return 'warning'
-    case 'En cours':
-      return 'info'
-    case 'Erreur':
-      return 'error'
-    default:
-      return 'grey'
-  }
+// --- helpers ---
+function startOfDay(d: Date) {
+  return new Date(d.getFullYear(), d.getMonth(), d.getDate())
+}
+function startOfWeek(d: Date) {
+  // Lundi 00:00
+  const day = d.getDay() === 0 ? 6 : d.getDay() - 1
+  const mon = new Date(d)
+  mon.setDate(d.getDate() - day)
+  return startOfDay(mon)
+}
+function endOfWeek(d: Date) {
+  const sun = new Date(startOfWeek(d))
+  sun.setDate(sun.getDate() + 7)
+  return sun
 }
 
-const formatDate = (date: Date) => {
-  return new Intl.DateTimeFormat('fr-FR', {
-    hour: '2-digit',
-    minute: '2-digit',
-    day: '2-digit',
-    month: 'short'
-  }).format(date)
-}
+// --- stats aujourd'hui ---
+const todayStart = startOfDay(new Date())
+const todayEnd = new Date(todayStart.getTime() + 86400000)
+
+const todayTasks = computed(() =>
+  tasks.value.filter(t => {
+    if (!t.startAt) return false
+    const d = new Date(t.startAt)
+    return d >= todayStart && d < todayEnd
+  })
+)
+const todayPending  = computed(() => todayTasks.value.filter(t => !t.finishAt && !t.cancelledAt).length)
+const todayDone     = computed(() => todayTasks.value.filter(t => Boolean(t.finishAt)).length)
+const todayTotal    = computed(() => todayTasks.value.length)
+const todayProgress = computed(() => todayTotal.value ? (todayDone.value / todayTotal.value) * 100 : 0)
+
+// --- stats semaine ---
+const weekStart = startOfWeek(new Date())
+const weekEnd   = endOfWeek(new Date())
+
+const weekTasks = computed(() =>
+  tasks.value.filter(t => {
+    if (!t.startAt) return false
+    const d = new Date(t.startAt)
+    return d >= weekStart && d < weekEnd
+  })
+)
+const weekPending  = computed(() => weekTasks.value.filter(t => !t.finishAt && !t.cancelledAt).length)
+const weekDone     = computed(() => weekTasks.value.filter(t => Boolean(t.finishAt)).length)
+const weekTotal    = computed(() => weekTasks.value.length)
+const weekProgress = computed(() => weekTotal.value ? (weekDone.value / weekTotal.value) * 100 : 0)
+
+// --- toutes tâches en attente ---
+const allPending   = computed(() => tasks.value.filter(t => !t.finishAt && !t.cancelledAt))
+const totalPending = computed(() => allPending.value.length)
+const totalMinutes = computed(() => allPending.value.reduce((s, t) => s + (t.duration ?? 0), 0))
 </script>
-
-<style scoped>
-.v-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-}
-
-.v-card:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15) !important;
-}
-</style>
