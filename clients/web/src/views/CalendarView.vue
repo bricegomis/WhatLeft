@@ -2,8 +2,8 @@
   <AdminLayout>
     <!-- Layout: Tasks List + Calendar -->
     <v-row class="mb-6">
-      <!-- Left: Tasks Cards -->
-      <v-col cols="12" md="3">
+      <!-- Left: Tasks Cards — masqué sur mobile -->
+      <v-col cols="12" md="3" class="d-none d-md-flex flex-column">
         <div class="d-flex flex-column gap-3 task-list-container">
           <div v-if="tasksStore.unscheduledTasks.length === 0" class="text-center text-medium-emphasis pa-8">
             <p class="text-body-2">Aucune tâche</p>
@@ -30,7 +30,7 @@
                   {{ task.title }}
                 </h4>
                 <span class="text-caption text-white font-weight-bold flex-shrink-0">
-                  {{ task.duration }}h
+                  {{ task.duration }} min
                 </span>
               </div>
               
@@ -59,7 +59,7 @@
         </div>
       </v-col>
 
-      <!-- Right: Calendar -->
+      <!-- Right: Calendar — plein écran sur mobile -->
       <v-col cols="12" md="9">
         <v-card class="h-100">
           <v-card-text class="pa-0">
@@ -113,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, nextTick } from 'vue'
+import { ref, computed, reactive, onMounted, nextTick, watch } from 'vue'
 import { useDisplay } from 'vuetify'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -148,27 +148,30 @@ const calendarOptions = computed(() => ({
   editable: true,
   droppable: true,
   height: mobile.value ? 600 : 'auto',
-  events: tasksStore.scheduledTasks.map(task => {
-    const startDate = new Date(task.startAt as string)
-    const endDate = new Date(startDate.getTime() + task.duration * 60 * 60 * 1000)
-    
-    return {
-      id: task.id,
-      title: task.title,
-      start: task.startAt as string,
-      end: endDate.toISOString(),
-      extendedProps: {
-        finishAt: task.finishAt,
-        duration: task.duration
-      },
-      backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
-      borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
-    }
-  }),
+  events: (_info: any, successCallback: any) => {
+    successCallback(
+      tasksStore.scheduledTasks.map(task => {
+        const startDate = new Date(task.startAt as string)
+        const endDate = new Date(startDate.getTime() + task.duration * 60 * 1000)
+        return {
+          id: task.id,
+          title: task.title,
+          start: task.startAt as string,
+          end: endDate.toISOString(),
+          extendedProps: {
+            finishAt: task.finishAt,
+            duration: task.duration
+          },
+          backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
+          borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
+        }
+      })
+    )
+  },
   headerToolbar: {
       left: 'prev,next today',
       center: mobile.value ? '' : 'title',
-      right: mobile.value ? 'timeGridDay,dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
+      right: 'timeGridDay,dayGridMonth,timeGridWeek'
     },
   locale: 'fr',
   firstDay: 1,
@@ -258,6 +261,16 @@ const getTaskTimeRange = (task: any) => {
 
 // Drag & drop is now handled by FullCalendar's Draggable
 
+// Sync calendar when tasks change (function source needs explicit refetch)
+watch(
+  () => tasksStore.scheduledTasks,
+  async () => {
+    await nextTick()
+    calendarRef.value?.getApi()?.refetchEvents()
+  },
+  { deep: true }
+)
+
 onMounted(async () => {
   // Charger les tâches en premier
   if (tasksStore.tasks.length === 0) {
@@ -309,6 +322,7 @@ onMounted(async () => {
   setTimeout(() => {
     if (calendarRef.value) {
       calendarRef.value.getApi().render()
+      calendarRef.value.getApi().refetchEvents()
     }
   }, 100)
 })
