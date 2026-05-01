@@ -57,7 +57,7 @@ public sealed class TaskItem : AggregateRoot
             Title = template.Title,
             CreatedAt = DateTimeOffset.UtcNow,
             Duration = template.Duration,
-            Tags = template.Tags.ToList(),
+            Tags = [.. template.Tags],
             RecurringTemplateId = template.Id,
             PeriodStart = periodStart
         };

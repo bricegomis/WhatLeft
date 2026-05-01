@@ -63,10 +63,18 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
             entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
             entity.Property(t => t.Duration).IsRequired();
             entity.Property(t => t.RecurrenceType).HasConversion<string>().IsRequired();
-            entity.Property(t => t.ResetHour).IsRequired();
             entity.Property(t => t.IsActive).IsRequired();
             entity.Property(t => t.CreatedAt).IsRequired();
-            entity.Ignore(t => t.Tags); // computed from TagsRaw
+            entity.Property(t => t.Tags)
+                .HasConversion(
+                    v => string.Join(',', v),
+                    v => v.Length == 0
+                        ? new List<string>()
+                        : v.Split(',', StringSplitOptions.RemoveEmptyEntries).ToList(),
+                    new ValueComparer<List<string>>(
+                        (a, b) => a != null && b != null && a.SequenceEqual(b),
+                        v => v.Aggregate(0, (a, s) => HashCode.Combine(a, s.GetHashCode())),
+                        v => v.ToList()));
         });
     }
 }

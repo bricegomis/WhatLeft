@@ -38,7 +38,6 @@
               <v-list-item-title class="font-weight-medium">{{ tpl.title }}</v-list-item-title>
               <v-list-item-subtitle>
                 {{ recurrenceLabel(tpl) }}
-                &nbsp;·&nbsp; Reset à {{ tpl.resetHour }}h UTC
                 <span v-if="tpl.tags.length" class="ms-1">
                   &nbsp;·&nbsp;
                   <v-chip
@@ -160,18 +159,6 @@
             :disabled="!!editingId"
           />
 
-          <v-text-field
-            v-model.number="form.resetHour"
-            label="Heure de reset (UTC, 0–23)"
-            type="number"
-            min="0"
-            max="23"
-            step="1"
-            hint="Le dimanche à cette heure pour hebdo, chaque soir pour quotidien"
-            persistent-hint
-            class="mb-3"
-          />
-
           <v-combobox
             v-model="form.tags"
             :items="allTags"
@@ -227,7 +214,6 @@ const defaultForm = () => ({
   title: '',
   duration: 30,
   recurrenceType: 'Weekly' as RecurrenceType,
-  resetHour: 21,
   tags: [] as string[]
 })
 const form = ref(defaultForm())
@@ -275,7 +261,6 @@ async function save() {
       await recurringStore.updateTemplate(editingId.value, {
         title: form.value.title,
         duration: form.value.duration,
-        resetHour: form.value.resetHour,
         tags: form.value.tags
       })
     } else {
@@ -283,7 +268,6 @@ async function save() {
         title: form.value.title,
         duration: form.value.duration,
         recurrenceType: form.value.recurrenceType,
-        resetHour: form.value.resetHour,
         tags: form.value.tags
       })
     }

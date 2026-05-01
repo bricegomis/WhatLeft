@@ -6,8 +6,7 @@ public record RecurringTemplateDto(
     Guid Id,
     string Title,
     double Duration,
-    string[] Tags,
+    List<string> Tags,
     RecurrenceType RecurrenceType,
-    int ResetHour,
     bool IsActive,
     DateTimeOffset CreatedAt);

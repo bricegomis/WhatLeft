@@ -27,8 +27,6 @@ public sealed class RecurringTaskProcessor(
         foreach (var template in templates.Where(t => t.IsActive))
         {
             var periodStart = template.GetCurrentPeriodStart(now);
-            var resetTime = periodStart.AddHours(template.ResetHour);
-            if (now < resetTime) continue;
 
             await ProcessSingleAsync(template, periodStart, ct);
         }
