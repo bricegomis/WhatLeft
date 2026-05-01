@@ -1,6 +1,7 @@
 ﻿using WhatLeft.Tasks.Application.DTOs;
 using WhatLeft.Tasks.Application.UseCases;
 using WhatLeft.Tasks.Domain.Entities;
+using WhatLeft.Tasks.Domain.Enums;
 using WhatLeft.Tasks.Domain.Repositories;
 
 namespace WhatLeft.Tasks.Application.UseCases;
@@ -65,6 +66,14 @@ public sealed class RecurringTaskTemplateService(
     /// <summary>Manually triggers processing for a specific template (ignores reset hour).</summary>
     public Task<bool> ProcessNowAsync(Guid id, CancellationToken ct = default) =>
         processor.ProcessTemplateAsync(id, ct);
+
+    /// <summary>Cancels current period tasks and creates one for the next period.</summary>
+    public Task<bool> AdvanceAsync(Guid id, CancellationToken ct = default) =>
+        processor.AdvanceAsync(id, ct);
+
+    /// <summary>Advances all active templates of a given recurrence type to the next period.</summary>
+    public Task AdvanceAllByTypeAsync(RecurrenceType type, CancellationToken ct = default) =>
+        processor.AdvanceAllByTypeAsync(type, ct);
 
     private static RecurringTaskTemplateDto ToDto(RecurringTaskTemplate t) =>
         new(t.Id, t.Title, t.Duration, t.Tags, t.RecurrenceType, t.IsActive, t.CreatedAt);

@@ -1,5 +1,6 @@
 ﻿using WhatLeft.Tasks.Application.DTOs;
 using WhatLeft.Tasks.Application.UseCases;
+using WhatLeft.Tasks.Domain.Enums;
 
 namespace WhatLeft.Api.Modules.Tasks;
 
@@ -47,6 +48,20 @@ public static class RecurringTaskTemplatesEndpoints
         group.MapPost("/{id:guid}/process", async (Guid id, RecurringTaskTemplateService service, CancellationToken ct) =>
         {
             var ok = await service.ProcessNowAsync(id, ct);
+            return ok ? Results.Ok() : Results.NotFound();
+        });
+
+        // POST /recurring-templates/advance-all?type=Daily|Weekly — advance all templates of a type
+        group.MapPost("/advance-all", async (RecurrenceType type, RecurringTaskTemplateService service, CancellationToken ct) =>
+        {
+            await service.AdvanceAllByTypeAsync(type, ct);
+            return Results.Ok();
+        });
+
+        // POST /recurring-templates/{id}/advance — cancel current period tasks, create next period task
+        group.MapPost("/{id:guid}/advance", async (Guid id, RecurringTaskTemplateService service, CancellationToken ct) =>
+        {
+            var ok = await service.AdvanceAsync(id, ct);
             return ok ? Results.Ok() : Results.NotFound();
         });
 

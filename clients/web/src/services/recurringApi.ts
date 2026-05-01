@@ -68,6 +68,22 @@ export class RecurringApiService {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
   }
 
+  static async advance(id: string): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/recurring-templates/${id}/advance`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
+  static async advanceAllByType(type: 'Daily' | 'Weekly'): Promise<void> {
+    const response = await fetch(`${API_BASE_URL}/recurring-templates/advance-all?type=${type}`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
+  }
+
   static async fetchHistory(): Promise<Task[]> {
     const response = await fetch(`${API_BASE_URL}/tasks/history`, {
       headers: authHeaders()

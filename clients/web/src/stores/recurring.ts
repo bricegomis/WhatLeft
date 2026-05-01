@@ -85,6 +85,24 @@ export const useRecurringStore = defineStore('recurring', {
       }
     },
 
+    async advance(id: string) {
+      this.error = null
+      try {
+        await RecurringApiService.advance(id)
+      } catch (e) {
+        this.error = e instanceof Error ? e.message : "Erreur lors de l'avancement"
+      }
+    },
+
+    async advanceAllByType(type: 'Daily' | 'Weekly') {
+      this.error = null
+      try {
+        await RecurringApiService.advanceAllByType(type)
+      } catch (e) {
+        this.error = e instanceof Error ? e.message : "Erreur lors de l'avancement global"
+      }
+    },
+
     clearError() {
       this.error = null
     }

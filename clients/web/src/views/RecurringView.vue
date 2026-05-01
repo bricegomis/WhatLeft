@@ -17,6 +17,34 @@
       {{ error }}
     </v-alert>
 
+    <!-- Boutons reset global -->
+    <v-row class="mb-4" dense>
+      <v-col cols="12" sm="6">
+        <v-btn
+          block
+          variant="tonal"
+          color="deep-purple"
+          prepend-icon="mdi-skip-next"
+          :disabled="isLoading || !hasDailyActive"
+          @click="confirmAdvanceAll('Daily')"
+        >
+          Terminer la journée
+        </v-btn>
+      </v-col>
+      <v-col cols="12" sm="6">
+        <v-btn
+          block
+          variant="tonal"
+          color="indigo"
+          prepend-icon="mdi-calendar-arrow-right"
+          :disabled="isLoading || !hasWeeklyActive"
+          @click="confirmAdvanceAll('Weekly')"
+        >
+            Terminer la semaine
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <div v-if="isLoading && templates.length === 0" class="text-center pa-12">
       <v-progress-circular indeterminate color="primary" class="mb-4" />
       <p class="text-body-1">Chargement...</p>
@@ -126,6 +154,53 @@
         Créer une récurrence
       </v-btn>
     </v-card>
+
+    <!-- Dialog confirmation avancement global -->
+    <v-dialog v-model="advanceAllDialog" max-width="420" persistent>
+      <v-card>
+        <v-card-title class="d-flex align-center ga-2">
+          <v-icon color="deep-purple">{{ advanceAllType === 'Daily' ? 'mdi-skip-next' : 'mdi-calendar-arrow-right' }}</v-icon>
+          {{ advanceAllType === 'Daily' ? 'Passer à demain' : 'Passer à la semaine prochaine' }}
+        </v-card-title>
+        <v-card-text>
+          Toutes les tâches non terminées
+          <strong>{{ advanceAllType === 'Daily' ? "d'aujourd'hui" : 'de cette semaine' }}</strong>
+          seront annulées et remplacées par de nouvelles tâches
+          <strong>{{ advanceAllType === 'Daily' ? 'de demain' : 'de la semaine prochaine' }}</strong>.
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="advanceAllDialog = false" :disabled="isAdvancingAll">Annuler</v-btn>
+          <v-btn color="deep-purple" :loading="isAdvancingAll" @click="doAdvanceAll">Confirmer</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
+
+    <!-- Dialog confirmation avancement période -->
+    <v-dialog v-model="advanceDialog" max-width="420" persistent>
+      <v-card v-if="advancingTemplate">
+        <v-card-title class="d-flex align-center ga-2">
+          <v-icon :color="advancingTemplate.recurrenceType === 'Daily' ? 'deep-purple' : 'deep-purple'">
+            {{ advancingTemplate.recurrenceType === 'Daily' ? 'mdi-skip-next' : 'mdi-calendar-arrow-right' }}
+          </v-icon>
+          {{ advancingTemplate.recurrenceType === 'Daily' ? 'Passer à demain' : 'Passer à la semaine prochaine' }}
+        </v-card-title>
+        <v-card-text>
+          <p>
+            Les tâches non terminées de
+            <strong>{{ advancingTemplate.recurrenceType === 'Daily' ? "aujourd'hui" : 'cette semaine' }}</strong>
+            pour <strong>« {{ advancingTemplate.title }} »</strong> seront annulées,
+            et une nouvelle tâche sera créée pour
+            <strong>{{ advancingTemplate.recurrenceType === 'Daily' ? 'demain' : 'la semaine prochaine' }}</strong>.
+          </p>
+        </v-card-text>
+        <v-card-actions>
+          <v-spacer />
+          <v-btn variant="text" @click="advanceDialog = false" :disabled="isAdvancing">Annuler</v-btn>
+          <v-btn color="deep-purple" :loading="isAdvancing" @click="doAdvance">Confirmer</v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Dialog création / édition -->
     <v-dialog v-model="dialog" max-width="520" :fullscreen="$vuetify.display.xs">
@@ -287,6 +362,46 @@ async function triggerNow(id: string) {
   await recurringStore.processNow(id)
   // Reload tasks so the newly created instances appear
   await tasksStore.fetchTasks()
+}
+
+const advanceAllDialog = ref(false)
+const advanceAllType = ref<'Daily' | 'Weekly'>('Daily')
+const isAdvancingAll = ref(false)
+
+const hasDailyActive  = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Daily'))
+const hasWeeklyActive = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Weekly'))
+
+function confirmAdvanceAll(type: 'Daily' | 'Weekly') {
+  advanceAllType.value = type
+  advanceAllDialog.value = true
+}
+
+async function doAdvanceAll() {
+  isAdvancingAll.value = true
+  try {
+    await recurringStore.advanceAllByType(advanceAllType.value)
+    await tasksStore.fetchTasks()
+    advanceAllDialog.value = false
+  } finally {
+    isAdvancingAll.value = false
+  }
+}
+
+const advanceDialog = ref(false)
+const advancingTemplate = ref<RecurringTaskTemplate | null>(null)
+const isAdvancing = ref(false)
+
+async function doAdvance() {
+  if (!advancingTemplate.value) return
+  isAdvancing.value = true
+  try {
+    await recurringStore.advance(advancingTemplate.value.id)
+    await tasksStore.fetchTasks()
+    advanceDialog.value = false
+  } finally {
+    isAdvancing.value = false
+    advancingTemplate.value = null
+  }
 }
 
 function clearError() {

@@ -43,6 +43,57 @@ public sealed class RecurringTaskProcessor(
         return true;
     }
 
+    /// <summary>
+    /// Cancels current period tasks and creates next period task for ALL active templates of a given type.
+    /// </summary>
+    public async Task AdvanceAllByTypeAsync(RecurrenceType type, CancellationToken ct = default)
+    {
+        var templates = await templateRepo.GetAllAsync(ct);
+        foreach (var template in templates.Where(t => t.IsActive && t.RecurrenceType == type))
+            await AdvanceSingleAsync(template, ct);
+    }
+
+    /// <summary>
+    /// Cancels unfinished tasks for the current period and creates a task for the next period.
+    /// Useful when you want to skip to the next cycle early.
+    /// </summary>
+    public async Task<bool> AdvanceAsync(Guid templateId, CancellationToken ct = default)
+    {
+        var template = await templateRepo.GetByIdAsync(templateId, ct);
+        if (template is null || !template.IsActive) return false;
+        await AdvanceSingleAsync(template, ct);
+        return true;
+    }
+
+    private async Task AdvanceSingleAsync(RecurringTaskTemplate template, CancellationToken ct)
+    {
+        var now = DateTimeOffset.UtcNow;
+        var currentPeriodStart = template.GetCurrentPeriodStart(now);
+
+        // Cancel unfinished tasks for the current period
+        var currentTasks = await taskRepo.GetUnfinishedByTemplateAndPeriodAsync(template.Id, currentPeriodStart, ct);
+        foreach (var task in currentTasks)
+        {
+            task.Cancel();
+            taskRepo.Update(task);
+        }
+
+        // Compute next period start
+        var nextPeriodStart = template.RecurrenceType == RecurrenceType.Daily
+            ? currentPeriodStart.AddDays(1)
+            : currentPeriodStart.AddDays(7);
+
+        // Create one task for the next period
+        var newTask = TaskItem.CreateFromTemplate(template, nextPeriodStart);
+        await taskRepo.AddAsync(newTask, ct);
+
+        await taskRepo.SaveChangesAsync(ct);
+
+        logger.LogInformation(
+            "Recurring advance: template {Id} ({Title}), next period {Period}",
+            template.Id, template.Title, nextPeriodStart);
+    }
+
     private async Task ProcessSingleAsync(RecurringTaskTemplate template, DateTimeOffset periodStart, CancellationToken ct)
     {
         // Idempotency guard: skip if instances already exist for this period
