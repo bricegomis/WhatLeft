@@ -8,6 +8,7 @@ public sealed class TaskRepository(TasksDbContext context) : ITaskRepository
 {
     public async Task<IEnumerable<TaskItem>> GetAllAsync(CancellationToken ct = default) =>
         await context.Tasks
+            .Where(t => t.FinishAt == null)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(ct);
 
