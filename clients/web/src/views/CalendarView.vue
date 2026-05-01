@@ -1,11 +1,11 @@
 <template>
   <AdminLayout>
     <!-- Page Header -->
-    <v-row class="mb-6">
+    <v-row class="mb-4 mb-sm-6">
       <v-col cols="12">
         <div>
-          <h1 class="text-h4 font-weight-bold mb-2">Calendrier</h1>
-          <p class="text-body-1 text-medium-emphasis mb-0">
+          <h1 class="text-h5 text-sm-h4 font-weight-bold mb-2">Calendrier</h1>
+          <p class="text-body-2 text-sm-body-1 text-medium-emphasis mb-0">
             Glissez les tâches à gauche sur le calendrier pour les planifier.
           </p>
         </div>
@@ -87,7 +87,11 @@
     </v-row>
 
     <!-- Edit Event Dialog -->
-    <v-dialog v-model="showEventModal" max-width="500">
+    <v-dialog
+      v-model="showEventModal"
+      max-width="500"
+      :fullscreen="$vuetify.display.xs"
+    >
       <v-card>
         <v-card-title>Modifier la tâche</v-card-title>
         <v-card-text>
@@ -122,6 +126,7 @@
 
 <script setup lang="ts">
 import { ref, computed, reactive, onMounted, nextTick } from 'vue'
+import { useDisplay } from 'vuetify'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
@@ -138,6 +143,7 @@ interface SelectedEvent {
 }
 
 const tasksStore = useTasksStore()
+const { mobile } = useDisplay()
 const calendarRef = ref()
 const showEventModal = ref(false)
 const selectedEvent = reactive<SelectedEvent>({
@@ -149,9 +155,11 @@ const selectedEvent = reactive<SelectedEvent>({
 
 const calendarOptions = computed(() => ({
   plugins: [dayGridPlugin, timeGridPlugin, interactionPlugin],
-  initialView: 'timeGridWeek',
+  // Sur mobile : vue jour (lisible), sur desktop : vue semaine
+  initialView: mobile.value ? 'timeGridDay' : 'timeGridWeek',
   editable: true,
   droppable: true,
+  height: mobile.value ? 600 : 'auto',
   events: tasksStore.scheduledTasks.map(task => {
     const startDate = new Date(task.startAt as string)
     const endDate = new Date(startDate.getTime() + task.duration * 60 * 60 * 1000)
@@ -171,8 +179,8 @@ const calendarOptions = computed(() => ({
   }),
   headerToolbar: {
       left: 'prev,next today',
-      center: 'title',
-      right: 'dayGridMonth,timeGridWeek,timeGridDay'
+      center: mobile.value ? '' : 'title',
+      right: mobile.value ? 'timeGridDay,dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
     },
   locale: 'fr',
   firstDay: 1,

@@ -3,10 +3,10 @@
     <!-- Page Header -->
     <v-row class="mb-6">
       <v-col cols="12">
-        <div class="d-flex justify-space-between align-center">
+        <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-3">
           <div>
-            <h1 class="text-h4 font-weight-bold mb-2">Liste des tâches</h1>
-            <p class="text-body-1 text-medium-emphasis mb-0">
+            <h1 class="text-h5 text-sm-h4 font-weight-bold mb-2">Liste des tâches</h1>
+            <p class="text-body-2 text-sm-body-1 text-medium-emphasis mb-0">
               Suivre, planifier et terminer les tâches.
             </p>
           </div>
@@ -15,6 +15,7 @@
             prepend-icon="mdi-plus"
             @click="openModal"
             :disabled="isLoading"
+            :block="$vuetify.display.xs"
           >
             Nouvelle tâche
           </v-btn>
@@ -76,10 +77,6 @@
           {{ formatDate(item.createdAt) }}
         </template>
 
-        <template #item.finishAt="{ item }">
-          {{ item.finishAt ? formatDate(item.finishAt) : '—' }}
-        </template>
-
         <template #item.tags="{ item }">
           <div class="d-flex flex-wrap gap-1 py-1">
             <v-chip
@@ -92,17 +89,6 @@
             <span v-if="item.tags.length === 0" class="text-medium-emphasis text-caption">—</span>
           </div>
         </template>
-
-        <template #item.status="{ item }">
-          <v-chip
-            :color="item.finishAt ? 'success' : 'warning'"
-            size="small"
-            variant="flat"
-          >
-            {{ item.finishAt ? 'Terminée' : 'En cours' }}
-          </v-chip>
-        </template>
-
         <template #item.actions="{ item }">
           <v-btn
             v-if="!item.finishAt"
@@ -156,7 +142,11 @@
     </v-card>
 
     <!-- Create Task Dialog -->
-    <v-dialog v-model="isModalOpen" max-width="500">
+    <v-dialog
+      v-model="isModalOpen"
+      max-width="500"
+      :fullscreen="$vuetify.display.xs"
+    >
       <v-card>
         <v-card-title>Ajouter une tâche</v-card-title>
         <v-card-text>
@@ -246,12 +236,10 @@ const allExistingTags = computed(() => {
 })
 
 const tableHeaders = [
-  { title: 'Tâche', key: 'title', width: '35%' },
-  { title: 'Tags', key: 'tags', width: '20%', sortable: false },
+  { title: 'Tâche', key: 'title', width: '40%' },
+  { title: 'Tags', key: 'tags', width: '25%', sortable: false },
   { title: 'Créé le', key: 'createdAt', width: '15%' },
-  { title: 'Terminé le', key: 'finishAt', width: '15%' },
-  { title: 'Statut', key: 'status', width: '10%' },
-  { title: 'Actions', key: 'actions', width: '5%', sortable: false }
+  { title: 'Actions', key: 'actions', width: '10%', sortable: false }
 ]
 
 const formatDate = (dateString: string) => {

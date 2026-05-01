@@ -98,7 +98,7 @@
 
     <!-- MAIN CONTENT -->
     <v-main class="bg-grey-lighten-5">
-      <v-container fluid class="pa-6">
+      <v-container fluid :class="$vuetify.display.mobile ? 'pa-3' : 'pa-6'">
         <slot />
       </v-container>
     </v-main>
@@ -107,12 +107,15 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
+import { useDisplay } from 'vuetify'
 import { useRoute } from 'vue-router'
 import { useAuth0 } from '@auth0/auth0-vue'
 import { gravatarUrl } from '../composables/useGravatar'
 
 const { user, logout } = useAuth0()
-const drawer = ref(true)
+const { mobile } = useDisplay()
+// Drawer fermé par défaut sur mobile, ouvert sur desktop
+const drawer = ref(!mobile.value)
 const search = ref('')
 
 const avatarUrl = computed(() => gravatarUrl(user.value?.email, 80))
