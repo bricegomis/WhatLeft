@@ -23,7 +23,6 @@ public sealed class RecurringTemplateService(
             request.Duration,
             request.Tags ?? [],
             request.RecurrenceType,
-            request.FrequencyPerPeriod,
             request.ResetHour);
 
         await repository.AddAsync(template, ct);
@@ -36,7 +35,7 @@ public sealed class RecurringTemplateService(
         var template = await repository.GetByIdAsync(id, ct);
         if (template is null) return null;
 
-        template.Update(request.Title, request.Duration, request.Tags, request.FrequencyPerPeriod, request.ResetHour);
+        template.Update(request.Title, request.Duration, request.Tags, request.ResetHour);
         repository.Update(template);
         await repository.SaveChangesAsync(ct);
         return ToDto(template);
@@ -69,5 +68,5 @@ public sealed class RecurringTemplateService(
         processor.ProcessTemplateAsync(id, ct);
 
     private static RecurringTemplateDto ToDto(RecurringTemplate t) =>
-        new(t.Id, t.Title, t.Duration, t.Tags, t.RecurrenceType, t.FrequencyPerPeriod, t.ResetHour, t.IsActive, t.CreatedAt);
+        new(t.Id, t.Title, t.Duration, t.Tags, t.RecurrenceType, t.ResetHour, t.IsActive, t.CreatedAt);
 }

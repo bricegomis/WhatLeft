@@ -8,7 +8,6 @@ public record RecurringTemplateDto(
     double Duration,
     string[] Tags,
     RecurrenceType RecurrenceType,
-    int FrequencyPerPeriod,
     int ResetHour,
     bool IsActive,
     DateTimeOffset CreatedAt);

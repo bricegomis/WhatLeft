@@ -52,8 +52,8 @@ public sealed class RecurringTaskProcessor(
         if (existingCount > 0) return;
 
         logger.LogInformation(
-            "Recurring: processing template {Id} ({Title}), period {Period}, frequency {N}",
-            template.Id, template.Title, periodStart, template.FrequencyPerPeriod);
+            "Recurring: processing template {Id} ({Title}), period {Period}",
+            template.Id, template.Title, periodStart);
 
         // Cancel previous period's uncompleted instances
         var previousPeriodStart = template.RecurrenceType == RecurrenceType.Daily
@@ -67,12 +67,9 @@ public sealed class RecurringTaskProcessor(
             taskRepo.Update(task);
         }
 
-        // Create new task instances for the current period
-        for (int i = 0; i < template.FrequencyPerPeriod; i++)
-        {
-            var newTask = TaskItem.CreateFromTemplate(template, periodStart);
-            await taskRepo.AddAsync(newTask, ct);
-        }
+        // Create one new task instance for the current period
+        var newTask = TaskItem.CreateFromTemplate(template, periodStart);
+        await taskRepo.AddAsync(newTask, ct);
 
         await taskRepo.SaveChangesAsync(ct);
     }

@@ -63,7 +63,6 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
             entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
             entity.Property(t => t.Duration).IsRequired();
             entity.Property(t => t.RecurrenceType).HasConversion<string>().IsRequired();
-            entity.Property(t => t.FrequencyPerPeriod).IsRequired();
             entity.Property(t => t.ResetHour).IsRequired();
             entity.Property(t => t.IsActive).IsRequired();
             entity.Property(t => t.CreatedAt).IsRequired();

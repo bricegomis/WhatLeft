@@ -240,10 +240,10 @@
 
           <v-text-field
             v-model.number="newTaskDuration"
-            label="Durée (heures)"
+            label="Durée (minutes)"
             type="number"
-            min="0.5"
-            step="0.5"
+            min="1"
+            step="5"
             :disabled="isCreating"
             class="mb-4"
           />

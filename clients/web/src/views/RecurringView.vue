@@ -143,10 +143,10 @@
 
           <v-text-field
             v-model.number="form.duration"
-            label="Durée (heures)"
+            label="Durée (minutes)"
             type="number"
-            min="0.5"
-            step="0.5"
+            min="1"
+            step="5"
             class="mb-3"
           />
 
@@ -158,15 +158,6 @@
             label="Récurrence"
             class="mb-3"
             :disabled="!!editingId"
-          />
-
-          <v-text-field
-            v-model.number="form.frequencyPerPeriod"
-            :label="form.recurrenceType === 'Weekly' ? 'Nombre de séances par semaine' : 'Nombre de fois par jour'"
-            type="number"
-            min="1"
-            step="1"
-            class="mb-3"
           />
 
           <v-text-field
@@ -234,9 +225,8 @@ const editingId = ref<string | null>(null)
 
 const defaultForm = () => ({
   title: '',
-  duration: 1,
+  duration: 30,
   recurrenceType: 'Weekly' as RecurrenceType,
-  frequencyPerPeriod: 3,
   resetHour: 21,
   tags: [] as string[]
 })
@@ -249,8 +239,7 @@ const recurrenceOptions = [
 
 function recurrenceLabel(tpl: RecurringTemplate) {
   const type = tpl.recurrenceType === 'Weekly' ? 'semaine' : 'jour'
-  const n = tpl.frequencyPerPeriod
-  return `${n} fois par ${type}`
+  return `1 fois par ${type} · ${tpl.duration} min`
 }
 
 function openCreateDialog() {
@@ -265,7 +254,7 @@ function openEditDialog(tpl: RecurringTemplate) {
     title: tpl.title,
     duration: tpl.duration,
     recurrenceType: tpl.recurrenceType,
-    frequencyPerPeriod: tpl.frequencyPerPeriod,
+
     resetHour: tpl.resetHour,
     tags: [...tpl.tags]
   }
@@ -286,7 +275,6 @@ async function save() {
       await recurringStore.updateTemplate(editingId.value, {
         title: form.value.title,
         duration: form.value.duration,
-        frequencyPerPeriod: form.value.frequencyPerPeriod,
         resetHour: form.value.resetHour,
         tags: form.value.tags
       })
@@ -295,7 +283,6 @@ async function save() {
         title: form.value.title,
         duration: form.value.duration,
         recurrenceType: form.value.recurrenceType,
-        frequencyPerPeriod: form.value.frequencyPerPeriod,
         resetHour: form.value.resetHour,
         tags: form.value.tags
       })
