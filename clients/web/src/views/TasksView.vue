@@ -126,93 +126,90 @@
       </v-data-table>
     </v-card>
 
-    <!-- Tasks Cards -->
-    <v-row v-else-if="tasks.length > 0 && viewMode === 'cards'" class="mb-6">
-      <v-col
-        v-for="task in tasks"
-        :key="task.id"
-        cols="12"
-        sm="6"
-        md="4"
-        lg="3"
-      >
-        <v-card class="h-100 d-flex flex-column">
-          <v-card-item>
-            <div class="d-flex align-start gap-2">
-              <v-checkbox
-                :model-value="!!task.finishAt"
-                @update:model-value="toggleFinish(task.id)"
-                hide-details
-                :disabled="isLoading"
-                density="compact"
-                class="mt-0 pt-0"
-              />
-              <div class="flex-grow-1" style="min-width: 0;">
-                <div
-                  class="text-subtitle-1 font-weight-medium"
-                  :class="{ 'text-decoration-line-through text-medium-emphasis': task.finishAt }"
-                >
-                  {{ task.title }}
-                </div>
-                <div class="text-caption text-medium-emphasis">
-                  Créé le {{ formatDate(task.createdAt) }}
-                </div>
-              </div>
-              <v-chip
-                :color="task.finishAt ? 'success' : 'warning'"
-                size="x-small"
-                variant="flat"
-              >
-                {{ task.finishAt ? 'Terminée' : 'En cours' }}
-              </v-chip>
-            </div>
-          </v-card-item>
+    <!-- Tasks List (style iOS Rappels) -->
+    <v-card v-else-if="tasks.length > 0 && viewMode === 'cards'" class="mb-6" style="overflow:hidden;">
+      <template v-for="(task, index) in tasks" :key="task.id">
+        <div style="position:relative; overflow:hidden;">
 
-          <v-card-text class="flex-grow-1 pt-0">
-            <div class="d-flex flex-wrap gap-1">
-              <v-chip
-                v-for="tag in task.tags"
-                :key="tag"
-                size="x-small"
-                variant="tonal"
-                color="primary"
-              >{{ tag }}</v-chip>
-              <span v-if="task.tags.length === 0" class="text-caption text-medium-emphasis">
-                Aucun tag
-              </span>
-            </div>
-          </v-card-text>
+          <!-- Actions révélées au glissement gauche -->
+          <div style="position:absolute; right:0; top:0; bottom:0; display:flex; width:210px;">
+            <button
+              style="flex:1; background:#34c759; color:white; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"
+              @click="toggleFinish(task.id); closeSwipe(task.id)"
+            >
+              <v-icon size="20">mdi-check</v-icon>
+              <span style="font-size:10px;">Terminer</span>
+            </button>
+            <button
+              style="flex:1; background:#ff9500; color:white; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"
+              @click="scheduleTonight(task.id)"
+            >
+              <v-icon size="20">mdi-weather-sunset</v-icon>
+              <span style="font-size:10px;">Ce soir</span>
+            </button>
+            <button
+              style="flex:1; background:#007aff; color:white; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"
+              @click="scheduleTomorrowMorning(task.id)"
+            >
+              <v-icon size="20">mdi-weather-sunrise</v-icon>
+              <span style="font-size:10px;">Demain</span>
+            </button>
+          </div>
 
-          <v-card-actions>
+          <!-- Contenu principal (glisse à gauche) -->
+          <div
+            class="d-flex align-center px-4 py-3"
+            :style="{
+              background: 'white',
+              position: 'relative',
+              zIndex: 1,
+              transform: `translateX(${getSwipeOffset(task.id)}px)`,
+              transition: isSwipeDragging(task.id) ? 'none' : 'transform 0.25s ease',
+            }"
+            @touchstart="onTouchStart(task.id, $event)"
+            @touchmove="onTouchMove(task.id, $event)"
+            @touchend="onTouchEnd(task.id, $event)"
+            @click="getSwipeOffset(task.id) !== 0 ? closeSwipe(task.id) : undefined"
+          >
+            <!-- Cercle checkbox -->
             <v-btn
-              v-if="!task.finishAt"
+              :icon="task.finishAt ? 'mdi-check-circle' : 'mdi-circle-outline'"
+              :color="task.finishAt ? 'success' : 'grey-lighten-1'"
+              variant="plain"
               size="small"
-              variant="text"
-              color="success"
-              @click="toggleFinish(task.id)"
+              @click.stop="toggleFinish(task.id)"
               :disabled="isLoading"
-            >Terminer</v-btn>
-            <v-btn
-              v-else
-              size="small"
-              variant="text"
-              color="primary"
-              @click="toggleFinish(task.id)"
-              :disabled="isLoading"
-            >Reprendre</v-btn>
-            <v-spacer />
-            <v-btn
-              size="small"
-              variant="text"
-              color="error"
-              @click="removeTask(task.id)"
-              :disabled="isLoading"
-              icon="mdi-delete"
+              class="mr-3 flex-shrink-0"
             />
-          </v-card-actions>
-        </v-card>
-      </v-col>
-    </v-row>
+
+            <!-- Texte -->
+            <div class="flex-grow-1" style="min-width:0;">
+              <div :class="['text-body-1', { 'text-decoration-line-through text-medium-emphasis': task.finishAt }]">
+                {{ task.title }}
+              </div>
+              <div v-if="task.startAt || task.tags.length" class="d-flex align-center flex-wrap gap-1 mt-1">
+                <span v-if="task.startAt" class="text-caption text-primary d-flex align-center ga-1">
+                  <v-icon size="12">mdi-clock-outline</v-icon>{{ formatDateTime(task.startAt) }}
+                </span>
+                <v-chip v-for="tag in task.tags" :key="tag" size="x-small" variant="tonal" color="primary">{{ tag }}</v-chip>
+              </div>
+            </div>
+
+            <!-- Bouton supprimer (desktop uniquement, sur hover) -->
+            <v-btn
+              class="d-none d-sm-flex flex-shrink-0 ml-2"
+              icon="mdi-delete-outline"
+              variant="plain"
+              color="grey"
+              size="small"
+              @click.stop="removeTask(task.id)"
+              :disabled="isLoading"
+            />
+          </div>
+        </div>
+        <v-divider v-if="index < tasks.length - 1" />
+      </template>
+    </v-card>
 
     <!-- Empty State -->
     <v-card v-else class="text-center pa-12">
@@ -301,7 +298,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, onMounted, watch, reactive } from 'vue'
 import { useDisplay } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
@@ -311,13 +308,82 @@ const tasksStore = useTasksStore()
 const { tasks, isLoading, hasError, error, isApiAvailable } = storeToRefs(tasksStore)
 const { mobile } = useDisplay()
 
-// Mode d'affichage : 'table' ou 'cards'
-// Persiste le choix utilisateur en localStorage ; par défaut 'cards' sur mobile, 'table' sinon
+// ── Mode d'affichage ─────────────────────────────────────────────────────────
 const STORAGE_KEY = 'whatleft.tasks.viewMode'
 const viewMode = ref<'table' | 'cards'>(
   (localStorage.getItem(STORAGE_KEY) as 'table' | 'cards') ?? (mobile.value ? 'cards' : 'table')
 )
 watch(viewMode, (v) => localStorage.setItem(STORAGE_KEY, v))
+
+// ── Swipe (vue liste) ───────────────────────────────────────────────────────
+const ACTION_WIDTH = 210
+interface SwipeItem {
+  offset: number; startX: number; startY: number
+  baseOffset: number; dragging: boolean; lockAxis: 'h' | 'v' | null
+}
+const swipeMap = reactive<Record<string, SwipeItem>>({})
+
+function ensureSwipe(id: string): SwipeItem {
+  if (!swipeMap[id]) swipeMap[id] = { offset: 0, startX: 0, startY: 0, baseOffset: 0, dragging: false, lockAxis: null }
+  return swipeMap[id]
+}
+function getSwipeOffset(id: string) { return swipeMap[id]?.offset ?? 0 }
+function isSwipeDragging(id: string) { return swipeMap[id]?.dragging ?? false }
+
+function onTouchStart(taskId: string, e: TouchEvent) {
+  for (const id in swipeMap) { if (id !== taskId) swipeMap[id].offset = 0 }
+  const s = ensureSwipe(taskId)
+  s.startX = e.touches[0].clientX; s.startY = e.touches[0].clientY
+  s.baseOffset = s.offset; s.dragging = true; s.lockAxis = null
+}
+function onTouchMove(taskId: string, e: TouchEvent) {
+  const s = swipeMap[taskId]
+  if (!s?.dragging) return
+  const dx = e.touches[0].clientX - s.startX
+  const dy = e.touches[0].clientY - s.startY
+  if (s.lockAxis === null) {
+    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) s.lockAxis = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v'
+    return
+  }
+  if (s.lockAxis === 'h') {
+    e.preventDefault()
+    s.offset = Math.max(-ACTION_WIDTH, Math.min(0, s.baseOffset + dx))
+  }
+}
+function onTouchEnd(taskId: string, e: TouchEvent) {
+  const s = swipeMap[taskId]
+  if (!s) return
+  if (s.lockAxis === 'h') {
+    const dx = e.changedTouches[0].clientX - s.startX
+    if (dx < -60) s.offset = -ACTION_WIDTH
+    else if (dx > 30) s.offset = 0
+    else s.offset = s.baseOffset
+  }
+  s.dragging = false; s.lockAxis = null
+}
+function closeSwipe(taskId: string) { if (swipeMap[taskId]) swipeMap[taskId].offset = 0 }
+
+// ── Actions rapides ──────────────────────────────────────────────────────────
+function scheduleTonight(taskId: string) {
+  const d = new Date(); d.setHours(19, 0, 0, 0)
+  tasksStore.updateTask(taskId, { startAt: d.toISOString() })
+  closeSwipe(taskId)
+}
+function scheduleTomorrowMorning(taskId: string) {
+  const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(8, 0, 0, 0)
+  tasksStore.updateTask(taskId, { startAt: d.toISOString() })
+  closeSwipe(taskId)
+}
+
+function formatDateTime(dateString: string) {
+  const date = new Date(dateString)
+  const today = new Date()
+  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
+  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
+  if (date.toDateString() === today.toDateString()) return `Aujourd'hui à ${time}`
+  if (date.toDateString() === tomorrow.toDateString()) return `Demain à ${time}`
+  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ` à ${time}`
+}
 
 const isModalOpen = ref(false)
 const newTaskTitle = ref('')
