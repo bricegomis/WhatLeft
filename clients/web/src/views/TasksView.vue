@@ -1,6 +1,18 @@
 <template>
   <AdminLayout>
     <template #actions>
+      <v-btn-toggle
+        v-model="viewMode"
+        mandatory
+        density="compact"
+        variant="outlined"
+        divided
+        class="me-2"
+      >
+        <v-btn value="table" size="small" icon="mdi-table" />
+        <v-btn value="cards" size="small" icon="mdi-view-grid" />
+      </v-btn-toggle>
+
       <v-btn
         color="primary"
         prepend-icon="mdi-plus"
@@ -42,7 +54,7 @@
     </div>
 
     <!-- Tasks Table -->
-    <v-card v-else-if="tasks.length > 0" class="mb-6">
+    <v-card v-else-if="tasks.length > 0 && viewMode === 'table'" class="mb-6">
       <v-data-table
         :headers="tableHeaders"
         :items="tasks"
@@ -113,6 +125,94 @@
         </template>
       </v-data-table>
     </v-card>
+
+    <!-- Tasks Cards -->
+    <v-row v-else-if="tasks.length > 0 && viewMode === 'cards'" class="mb-6">
+      <v-col
+        v-for="task in tasks"
+        :key="task.id"
+        cols="12"
+        sm="6"
+        md="4"
+        lg="3"
+      >
+        <v-card class="h-100 d-flex flex-column">
+          <v-card-item>
+            <div class="d-flex align-start gap-2">
+              <v-checkbox
+                :model-value="!!task.finishAt"
+                @update:model-value="toggleFinish(task.id)"
+                hide-details
+                :disabled="isLoading"
+                density="compact"
+                class="mt-0 pt-0"
+              />
+              <div class="flex-grow-1" style="min-width: 0;">
+                <div
+                  class="text-subtitle-1 font-weight-medium"
+                  :class="{ 'text-decoration-line-through text-medium-emphasis': task.finishAt }"
+                >
+                  {{ task.title }}
+                </div>
+                <div class="text-caption text-medium-emphasis">
+                  Créé le {{ formatDate(task.createdAt) }}
+                </div>
+              </div>
+              <v-chip
+                :color="task.finishAt ? 'success' : 'warning'"
+                size="x-small"
+                variant="flat"
+              >
+                {{ task.finishAt ? 'Terminée' : 'En cours' }}
+              </v-chip>
+            </div>
+          </v-card-item>
+
+          <v-card-text class="flex-grow-1 pt-0">
+            <div class="d-flex flex-wrap gap-1">
+              <v-chip
+                v-for="tag in task.tags"
+                :key="tag"
+                size="x-small"
+                variant="tonal"
+                color="primary"
+              >{{ tag }}</v-chip>
+              <span v-if="task.tags.length === 0" class="text-caption text-medium-emphasis">
+                Aucun tag
+              </span>
+            </div>
+          </v-card-text>
+
+          <v-card-actions>
+            <v-btn
+              v-if="!task.finishAt"
+              size="small"
+              variant="text"
+              color="success"
+              @click="toggleFinish(task.id)"
+              :disabled="isLoading"
+            >Terminer</v-btn>
+            <v-btn
+              v-else
+              size="small"
+              variant="text"
+              color="primary"
+              @click="toggleFinish(task.id)"
+              :disabled="isLoading"
+            >Reprendre</v-btn>
+            <v-spacer />
+            <v-btn
+              size="small"
+              variant="text"
+              color="error"
+              @click="removeTask(task.id)"
+              :disabled="isLoading"
+              icon="mdi-delete"
+            />
+          </v-card-actions>
+        </v-card>
+      </v-col>
+    </v-row>
 
     <!-- Empty State -->
     <v-card v-else class="text-center pa-12">
@@ -201,13 +301,23 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useDisplay } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const tasksStore = useTasksStore()
 const { tasks, isLoading, hasError, error, isApiAvailable } = storeToRefs(tasksStore)
+const { mobile } = useDisplay()
+
+// Mode d'affichage : 'table' ou 'cards'
+// Persiste le choix utilisateur en localStorage ; par défaut 'cards' sur mobile, 'table' sinon
+const STORAGE_KEY = 'whatleft.tasks.viewMode'
+const viewMode = ref<'table' | 'cards'>(
+  (localStorage.getItem(STORAGE_KEY) as 'table' | 'cards') ?? (mobile.value ? 'cards' : 'table')
+)
+watch(viewMode, (v) => localStorage.setItem(STORAGE_KEY, v))
 
 const isModalOpen = ref(false)
 const newTaskTitle = ref('')
