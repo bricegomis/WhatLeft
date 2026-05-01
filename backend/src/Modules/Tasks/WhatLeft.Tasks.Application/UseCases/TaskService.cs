@@ -19,6 +19,12 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
         return tasks.Select(ToDto);
     }
 
+    public async Task<IEnumerable<TaskDto>> GetHistoryAsync(CancellationToken ct = default)
+    {
+        var tasks = await repository.GetHistoryAsync(ct);
+        return tasks.Select(ToDto);
+    }
+
     public async Task<TaskDto> CreateAsync(CreateTaskRequest request, CancellationToken ct = default)
     {
         var task = TaskItem.Create(request.Title, request.Duration, request.StartAt, request.Tags);
@@ -60,5 +66,5 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
     }
 
     private static TaskDto ToDto(TaskItem t) =>
-        new(t.Id, t.Title, t.CreatedAt, t.Duration, t.StartAt, t.FinishAt, t.Tags);
+        new(t.Id, t.Title, t.CreatedAt, t.Duration, t.StartAt, t.FinishAt, t.Tags, t.CancelledAt, t.RecurringTemplateId);
 }

@@ -8,10 +8,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\WhatLeft.Tasks.Domain\WhatLeft.Tasks.Domain.csproj" />
+    <ProjectReference Include="..\WhatLeft.Tasks.Application\WhatLeft.Tasks.Application.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.1" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
   </ItemGroup>
 
 </Project>

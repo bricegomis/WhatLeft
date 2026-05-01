@@ -20,6 +20,10 @@ public static class TasksEndpoints
         group.MapGet("/", async (TaskService service, CancellationToken ct) =>
             Results.Ok(await service.GetAllAsync(ct)));
 
+        // GET /tasks/history — cancelled + finished tasks
+        group.MapGet("/history", async (TaskService service, CancellationToken ct) =>
+            Results.Ok(await service.GetHistoryAsync(ct)));
+
         // POST /tasks
         group.MapPost("/", async (CreateTaskRequest request, TaskService service, CancellationToken ct) =>
         {

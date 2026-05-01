@@ -16,12 +16,19 @@ public sealed class TaskItem : AggregateRoot
     public double Duration { get; private set; }
     public DateTimeOffset? StartAt { get; private set; }
     public DateTimeOffset? FinishAt { get; private set; }
+    public DateTimeOffset? CancelledAt { get; private set; }
     public List<string> Tags { get; private set; } = [];
+
+    /// <summary>Links this instance to the recurring template that generated it.</summary>
+    public Guid? RecurringTemplateId { get; private set; }
+
+    /// <summary>Start of the period (week or day) this instance belongs to.</summary>
+    public DateTimeOffset? PeriodStart { get; private set; }
 
     // Required by EF Core
     private TaskItem() { }
 
-    /// <summary>Factory method — the only valid way to create a task.</summary>
+    /// <summary>Factory method — the only valid way to create a manual task.</summary>
     public static TaskItem Create(
         string title,
         double duration,
@@ -40,6 +47,26 @@ public sealed class TaskItem : AggregateRoot
             StartAt = startAt,
             Tags = tags ?? []
         };
+    }
+
+    /// <summary>Creates a task instance generated from a recurring template.</summary>
+    public static TaskItem CreateFromTemplate(RecurringTemplate template, DateTimeOffset periodStart) =>
+        new()
+        {
+            Id = Guid.NewGuid(),
+            Title = template.Title,
+            CreatedAt = DateTimeOffset.UtcNow,
+            Duration = template.Duration,
+            Tags = template.Tags.ToList(),
+            RecurringTemplateId = template.Id,
+            PeriodStart = periodStart
+        };
+
+    /// <summary>Marks this task as cancelled (non-completed at period reset).</summary>
+    public void Cancel()
+    {
+        if (CancelledAt is null)
+            CancelledAt = DateTimeOffset.UtcNow;
     }
 
     /// <summary>

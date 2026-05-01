@@ -1,3 +1,4 @@
+using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -19,6 +20,13 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
     });
 
 builder.Services.AddAuthorization();
+
+// ── JSON ──────────────────────────────────────────────────────────────────────
+// Serialize/deserialize enums as strings (e.g. "Weekly" instead of 0)
+builder.Services.ConfigureHttpJsonOptions(options =>
+    options.SerializerOptions.Converters.Add(new JsonStringEnumConverter()));
+builder.Services.Configure<Microsoft.AspNetCore.Mvc.JsonOptions>(options =>
+    options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter()));
 
 // ── CORS ──────────────────────────────────────────────────────────────────────
 builder.Services.AddCors(options =>
@@ -71,6 +79,7 @@ app.UseAuthorization();
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.MapGet("/", () => new { status = "ok", message = "WhatLeft API is running" });
 app.MapTasksEndpoints();
+app.MapRecurringTemplatesEndpoints();
 // To add a new module: app.MapHabitsEndpoints(); etc.
 
 app.Run();

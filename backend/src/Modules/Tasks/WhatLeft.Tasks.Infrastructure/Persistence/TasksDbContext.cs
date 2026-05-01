@@ -12,6 +12,7 @@ namespace WhatLeft.Tasks.Infrastructure.Persistence;
 public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : DbContext(options)
 {
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
+    public DbSet<RecurringTemplate> RecurringTemplates => Set<RecurringTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -27,6 +28,9 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
             entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
             entity.Property(t => t.Duration).IsRequired();
             entity.Property(t => t.CreatedAt).IsRequired();
+            entity.Property(t => t.CancelledAt);
+            entity.Property(t => t.RecurringTemplateId);
+            entity.Property(t => t.PeriodStart);
 
             // Tags stored as comma-separated string (simple, avoids join table for now)
             entity.Property(t => t.Tags)
@@ -40,8 +44,30 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
                         v => v.Aggregate(0, (a, s) => HashCode.Combine(a, s.GetHashCode())),
                         v => v.ToList()));
 
+            // FK to RecurringTemplate (nullable — manual tasks have no template)
+            entity.HasOne<RecurringTemplate>()
+                .WithMany()
+                .HasForeignKey(t => t.RecurringTemplateId)
+                .OnDelete(DeleteBehavior.SetNull);
+
             // DomainEvents is a transient in-memory collection, never persisted
             entity.Ignore(t => t.DomainEvents);
+        });
+
+        modelBuilder.Entity<RecurringTemplate>(entity =>
+        {
+            entity.ToTable("recurring_templates");
+            entity.HasKey(t => t.Id);
+
+            entity.Property(t => t.Id).ValueGeneratedNever();
+            entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
+            entity.Property(t => t.Duration).IsRequired();
+            entity.Property(t => t.RecurrenceType).HasConversion<string>().IsRequired();
+            entity.Property(t => t.FrequencyPerPeriod).IsRequired();
+            entity.Property(t => t.ResetHour).IsRequired();
+            entity.Property(t => t.IsActive).IsRequired();
+            entity.Property(t => t.CreatedAt).IsRequired();
+            entity.Ignore(t => t.Tags); // computed from TagsRaw
         });
     }
 }

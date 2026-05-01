@@ -8,6 +8,8 @@ export interface Task {
   duration: number
   startAt: string | null
   finishAt: string | null
+  cancelledAt: string | null
+  recurringTemplateId: string | null
   tags: string[]
 }
 

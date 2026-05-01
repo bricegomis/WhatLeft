@@ -130,6 +130,8 @@ const menuItems = [
   { title: 'Tableau de bord', icon: 'mdi-view-dashboard', path: '/' },
   { title: 'Tâches', icon: 'mdi-check-circle-outline', path: '/tasks' },
   { title: 'Calendrier', icon: 'mdi-calendar', path: '/calendar' },
+  { title: 'Récurrences', icon: 'mdi-repeat', path: '/recurring' },
+  { title: 'Historique', icon: 'mdi-history', path: '/history' },
 ]
 
 const route = useRoute()

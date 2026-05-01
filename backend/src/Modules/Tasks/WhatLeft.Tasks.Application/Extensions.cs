@@ -8,6 +8,8 @@ public static class Extensions
     public static IServiceCollection AddTasksApplication(this IServiceCollection services)
     {
         services.AddScoped<TaskService>();
+        services.AddScoped<RecurringTemplateService>();
+        services.AddScoped<RecurringTaskProcessor>();
 
         // Registers TaskCompletedHandler and any other INotificationHandlers in this assembly
         services.AddMediatR(cfg =>

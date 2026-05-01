@@ -7,4 +7,6 @@ public record TaskDto(
     double Duration,
     DateTimeOffset? StartAt,
     DateTimeOffset? FinishAt,
-    List<string> Tags);
+    List<string> Tags,
+    DateTimeOffset? CancelledAt,
+    Guid? RecurringTemplateId);
