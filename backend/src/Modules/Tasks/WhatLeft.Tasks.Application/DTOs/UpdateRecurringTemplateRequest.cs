@@ -1,6 +1,6 @@
-namespace WhatLeft.Tasks.Application.DTOs;
+﻿namespace WhatLeft.Tasks.Application.DTOs;
 
-public record UpdateRecurringTemplateRequest(
+public record UpdateRecurringTaskTemplateRequest(
     string? Title = null,
     double? Duration = null,
     List<string>? Tags = null);

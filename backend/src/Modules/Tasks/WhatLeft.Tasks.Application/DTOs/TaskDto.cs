@@ -1,4 +1,4 @@
-namespace WhatLeft.Tasks.Application.DTOs;
+﻿namespace WhatLeft.Tasks.Application.DTOs;
 
 public record TaskDto(
     Guid Id,
@@ -9,4 +9,4 @@ public record TaskDto(
     DateTimeOffset? FinishAt,
     List<string> Tags,
     DateTimeOffset? CancelledAt,
-    Guid? RecurringTemplateId);
+    Guid? RecurringTaskTemplateId);

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using WhatLeft.Tasks.Domain.Repositories;
@@ -17,7 +17,7 @@ public static class Extensions
             options.UseNpgsql(configuration.GetConnectionString("Tasks")));
 
         services.AddScoped<ITaskRepository, TaskRepository>();
-        services.AddScoped<IRecurringTemplateRepository, RecurringTemplateRepository>();
+        services.AddScoped<IRecurringTaskTemplateRepository, RecurringTaskTemplateRepository>();
 
         services.AddHostedService<RecurringTaskBackgroundService>();
 

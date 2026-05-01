@@ -1,4 +1,4 @@
-using System.Text.Json.Serialization;
+﻿using System.Text.Json.Serialization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -79,7 +79,7 @@ app.UseAuthorization();
 // ── Routes ────────────────────────────────────────────────────────────────────
 app.MapGet("/", () => new { status = "ok", message = "WhatLeft API is running" });
 app.MapTasksEndpoints();
-app.MapRecurringTemplatesEndpoints();
+app.MapRecurringTaskTemplatesEndpoints();
 // To add a new module: app.MapHabitsEndpoints(); etc.
 
 app.Run();

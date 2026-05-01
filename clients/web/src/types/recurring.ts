@@ -1,6 +1,6 @@
-export type RecurrenceType = 'Daily' | 'Weekly'
+﻿export type RecurrenceType = 'Daily' | 'Weekly'
 
-export interface RecurringTemplate {
+export interface RecurringTaskTemplate {
   id: string
   title: string
   duration: number
@@ -10,14 +10,14 @@ export interface RecurringTemplate {
   createdAt: string
 }
 
-export interface CreateRecurringTemplateRequest {
+export interface CreateRecurringTaskTemplateRequest {
   title: string
   duration?: number
   tags?: string[]
   recurrenceType?: RecurrenceType
 }
 
-export interface UpdateRecurringTemplateRequest {
+export interface UpdateRecurringTaskTemplateRequest {
   title?: string
   duration?: number
   tags?: string[]

@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <AdminLayout>
     <template #actions>
       <v-btn
@@ -193,7 +193,7 @@ import { storeToRefs } from 'pinia'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import { useRecurringStore } from '../stores/recurring'
 import { useTasksStore } from '../stores/tasks'
-import type { RecurringTemplate, RecurrenceType } from '../types/recurring'
+import type { RecurringTaskTemplate, RecurrenceType } from '../types/recurring'
 
 const recurringStore = useRecurringStore()
 const { templates, isLoading, hasError, error, activeTemplates, inactiveTemplates } = storeToRefs(recurringStore)
@@ -223,7 +223,7 @@ const recurrenceOptions = [
   { label: 'Quotidienne', value: 'Daily' }
 ]
 
-function recurrenceLabel(tpl: RecurringTemplate) {
+function recurrenceLabel(tpl: RecurringTaskTemplate) {
   const type = tpl.recurrenceType === 'Weekly' ? 'semaine' : 'jour'
   return `1 fois par ${type} · ${tpl.duration} min`
 }
@@ -234,7 +234,7 @@ function openCreateDialog() {
   dialog.value = true
 }
 
-function openEditDialog(tpl: RecurringTemplate) {
+function openEditDialog(tpl: RecurringTaskTemplate) {
   editingId.value = tpl.id
   form.value = {
     title: tpl.title,

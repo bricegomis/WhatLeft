@@ -1,8 +1,8 @@
-using WhatLeft.Tasks.Domain.Enums;
+﻿using WhatLeft.Tasks.Domain.Enums;
 
 namespace WhatLeft.Tasks.Application.DTOs;
 
-public record RecurringTemplateDto(
+public record RecurringTaskTemplateDto(
     Guid Id,
     string Title,
     double Duration,

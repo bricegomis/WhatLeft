@@ -1,4 +1,4 @@
-import type { RecurringTemplate, CreateRecurringTemplateRequest, UpdateRecurringTemplateRequest } from '../types/recurring'
+﻿import type { RecurringTaskTemplate, CreateRecurringTaskTemplateRequest, UpdateRecurringTaskTemplateRequest } from '../types/recurring'
 import type { Task } from '../stores/tasks'
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || '/api'
@@ -16,7 +16,7 @@ export function setRecurringAuthToken(token: string | null) {
 }
 
 export class RecurringApiService {
-  static async fetchTemplates(): Promise<RecurringTemplate[]> {
+  static async fetchTemplates(): Promise<RecurringTaskTemplate[]> {
     const response = await fetch(`${API_BASE_URL}/recurring-templates`, {
       headers: authHeaders()
     })
@@ -24,7 +24,7 @@ export class RecurringApiService {
     return response.json()
   }
 
-  static async createTemplate(data: CreateRecurringTemplateRequest): Promise<RecurringTemplate> {
+  static async createTemplate(data: CreateRecurringTaskTemplateRequest): Promise<RecurringTaskTemplate> {
     const response = await fetch(`${API_BASE_URL}/recurring-templates`, {
       method: 'POST',
       headers: authHeaders(),
@@ -34,7 +34,7 @@ export class RecurringApiService {
     return response.json()
   }
 
-  static async updateTemplate(id: string, data: UpdateRecurringTemplateRequest): Promise<RecurringTemplate> {
+  static async updateTemplate(id: string, data: UpdateRecurringTaskTemplateRequest): Promise<RecurringTaskTemplate> {
     const response = await fetch(`${API_BASE_URL}/recurring-templates/${id}`, {
       method: 'PUT',
       headers: authHeaders(),

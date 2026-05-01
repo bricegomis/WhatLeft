@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { TasksApiService } from '../services/tasksApi'
 
 export interface Task {
@@ -9,7 +9,7 @@ export interface Task {
   startAt: string | null
   finishAt: string | null
   cancelledAt: string | null
-  recurringTemplateId: string | null
+  RecurringTaskTemplateId: string | null
   tags: string[]
 }
 

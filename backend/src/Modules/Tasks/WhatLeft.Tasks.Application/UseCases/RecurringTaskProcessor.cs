@@ -1,4 +1,4 @@
-using Microsoft.Extensions.Logging;
+﻿using Microsoft.Extensions.Logging;
 using WhatLeft.Tasks.Domain.Entities;
 using WhatLeft.Tasks.Domain.Enums;
 using WhatLeft.Tasks.Domain.Repositories;
@@ -11,7 +11,7 @@ namespace WhatLeft.Tasks.Application.UseCases;
 /// and directly by the manual-trigger endpoint.
 /// </summary>
 public sealed class RecurringTaskProcessor(
-    IRecurringTemplateRepository templateRepo,
+    IRecurringTaskTemplateRepository templateRepo,
     ITaskRepository taskRepo,
     ILogger<RecurringTaskProcessor> logger)
 {
@@ -43,7 +43,7 @@ public sealed class RecurringTaskProcessor(
         return true;
     }
 
-    private async Task ProcessSingleAsync(RecurringTemplate template, DateTimeOffset periodStart, CancellationToken ct)
+    private async Task ProcessSingleAsync(RecurringTaskTemplate template, DateTimeOffset periodStart, CancellationToken ct)
     {
         // Idempotency guard: skip if instances already exist for this period
         var existingCount = await taskRepo.CountByTemplateAndPeriodAsync(template.Id, periodStart, ct);

@@ -1,4 +1,4 @@
-using WhatLeft.Tasks.Application.DTOs;
+﻿using WhatLeft.Tasks.Application.DTOs;
 using WhatLeft.Tasks.Application.UseCases;
 using WhatLeft.Tasks.Domain.Entities;
 using WhatLeft.Tasks.Domain.Repositories;
@@ -6,19 +6,19 @@ using WhatLeft.Tasks.Domain.Repositories;
 namespace WhatLeft.Tasks.Application.UseCases;
 
 /// <summary>CRUD for recurring task templates.</summary>
-public sealed class RecurringTemplateService(
-    IRecurringTemplateRepository repository,
+public sealed class RecurringTaskTemplateService(
+    IRecurringTaskTemplateRepository repository,
     RecurringTaskProcessor processor)
 {
-    public async Task<IEnumerable<RecurringTemplateDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<RecurringTaskTemplateDto>> GetAllAsync(CancellationToken ct = default)
     {
         var templates = await repository.GetAllAsync(ct);
         return templates.Select(ToDto);
     }
 
-    public async Task<RecurringTemplateDto> CreateAsync(CreateRecurringTemplateRequest request, CancellationToken ct = default)
+    public async Task<RecurringTaskTemplateDto> CreateAsync(CreateRecurringTaskTemplateRequest request, CancellationToken ct = default)
     {
-        var template = RecurringTemplate.Create(
+        var template = RecurringTaskTemplate.Create(
             request.Title,
             request.Duration,
             request.Tags ?? [],
@@ -29,7 +29,7 @@ public sealed class RecurringTemplateService(
         return ToDto(template);
     }
 
-    public async Task<RecurringTemplateDto?> UpdateAsync(Guid id, UpdateRecurringTemplateRequest request, CancellationToken ct = default)
+    public async Task<RecurringTaskTemplateDto?> UpdateAsync(Guid id, UpdateRecurringTaskTemplateRequest request, CancellationToken ct = default)
     {
         var template = await repository.GetByIdAsync(id, ct);
         if (template is null) return null;
@@ -66,6 +66,6 @@ public sealed class RecurringTemplateService(
     public Task<bool> ProcessNowAsync(Guid id, CancellationToken ct = default) =>
         processor.ProcessTemplateAsync(id, ct);
 
-    private static RecurringTemplateDto ToDto(RecurringTemplate t) =>
+    private static RecurringTaskTemplateDto ToDto(RecurringTaskTemplate t) =>
         new(t.Id, t.Title, t.Duration, t.Tags, t.RecurrenceType, t.IsActive, t.CreatedAt);
 }

@@ -1,10 +1,10 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 import { RecurringApiService } from '../services/recurringApi'
-import type { RecurringTemplate, CreateRecurringTemplateRequest, UpdateRecurringTemplateRequest } from '../types/recurring'
+import type { RecurringTaskTemplate, CreateRecurringTaskTemplateRequest, UpdateRecurringTaskTemplateRequest } from '../types/recurring'
 
 export const useRecurringStore = defineStore('recurring', {
   state: () => ({
-    templates: [] as RecurringTemplate[],
+    templates: [] as RecurringTaskTemplate[],
     loading: false,
     error: null as string | null
   }),
@@ -29,7 +29,7 @@ export const useRecurringStore = defineStore('recurring', {
       }
     },
 
-    async addTemplate(data: CreateRecurringTemplateRequest) {
+    async addTemplate(data: CreateRecurringTaskTemplateRequest) {
       this.loading = true
       this.error = null
       try {
@@ -43,7 +43,7 @@ export const useRecurringStore = defineStore('recurring', {
       }
     },
 
-    async updateTemplate(id: string, data: UpdateRecurringTemplateRequest) {
+    async updateTemplate(id: string, data: UpdateRecurringTaskTemplateRequest) {
       this.error = null
       try {
         const updated = await RecurringApiService.updateTemplate(id, data)

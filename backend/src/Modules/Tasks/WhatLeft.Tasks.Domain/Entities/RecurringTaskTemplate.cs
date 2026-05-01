@@ -1,4 +1,4 @@
-using WhatLeft.Tasks.Domain.Enums;
+﻿using WhatLeft.Tasks.Domain.Enums;
 
 namespace WhatLeft.Tasks.Domain.Entities;
 
@@ -7,7 +7,7 @@ namespace WhatLeft.Tasks.Domain.Entities;
 /// The background service uses this to generate TaskItem instances each period
 /// and cancel the previous period's uncompleted ones.
 /// </summary>
-public sealed class RecurringTemplate
+public sealed class RecurringTaskTemplate
 {
     public Guid Id { get; private set; }
     public string Title { get; private set; } = string.Empty;
@@ -19,9 +19,9 @@ public sealed class RecurringTemplate
     public DateTimeOffset CreatedAt { get; private set; }
 
     // Required by EF Core
-    private RecurringTemplate() { }
+    private RecurringTaskTemplate() { }
 
-    public static RecurringTemplate Create(
+    public static RecurringTaskTemplate Create(
         string title,
         double duration,
         List<string> tags,
@@ -30,7 +30,7 @@ public sealed class RecurringTemplate
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         if (duration <= 0) throw new ArgumentException("Duration must be positive.", nameof(duration));
 
-        return new RecurringTemplate
+        return new RecurringTaskTemplate
         {
             Id = Guid.NewGuid(),
             Title = title.Trim(),

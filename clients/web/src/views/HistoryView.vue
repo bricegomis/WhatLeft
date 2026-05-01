@@ -1,4 +1,4 @@
-<template>
+﻿<template>
   <AdminLayout>
     <v-alert v-if="hasError" type="error" class="mb-6" dismissible @click:close="clearError">
       {{ error }}
@@ -38,7 +38,7 @@
                 </v-list-item-title>
                 <v-list-item-subtitle>
                   Terminé le {{ formatDate(task.finishAt!) }}
-                  <span v-if="task.recurringTemplateId" class="ms-1">
+                  <span v-if="task.RecurringTaskTemplateId" class="ms-1">
                     · <v-icon size="12" color="primary">mdi-repeat</v-icon> récurrente
                   </span>
                   <span v-if="task.tags.length" class="ms-1">

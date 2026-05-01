@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using WhatLeft.Tasks.Domain.Entities;
 using WhatLeft.Tasks.Domain.Repositories;
 
@@ -19,11 +19,11 @@ public sealed class TaskRepository(TasksDbContext context) : ITaskRepository
             .ToListAsync(ct);
 
     public Task<int> CountByTemplateAndPeriodAsync(Guid templateId, DateTimeOffset periodStart, CancellationToken ct = default) =>
-        context.Tasks.CountAsync(t => t.RecurringTemplateId == templateId && t.PeriodStart == periodStart, ct);
+        context.Tasks.CountAsync(t => t.RecurringTaskTemplateId == templateId && t.PeriodStart == periodStart, ct);
 
     public async Task<IEnumerable<TaskItem>> GetUnfinishedByTemplateAndPeriodAsync(Guid templateId, DateTimeOffset periodStart, CancellationToken ct = default) =>
         await context.Tasks
-            .Where(t => t.RecurringTemplateId == templateId
+            .Where(t => t.RecurringTaskTemplateId == templateId
                      && t.PeriodStart == periodStart
                      && t.FinishAt == null
                      && t.CancelledAt == null)

@@ -1,4 +1,4 @@
-using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using WhatLeft.Tasks.Domain.Entities;
 
@@ -12,7 +12,7 @@ namespace WhatLeft.Tasks.Infrastructure.Persistence;
 public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : DbContext(options)
 {
     public DbSet<TaskItem> Tasks => Set<TaskItem>();
-    public DbSet<RecurringTemplate> RecurringTemplates => Set<RecurringTemplate>();
+    public DbSet<RecurringTaskTemplate> RecurringTaskTemplates => Set<RecurringTaskTemplate>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -29,7 +29,7 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
             entity.Property(t => t.Duration).IsRequired();
             entity.Property(t => t.CreatedAt).IsRequired();
             entity.Property(t => t.CancelledAt);
-            entity.Property(t => t.RecurringTemplateId);
+            entity.Property(t => t.RecurringTaskTemplateId);
             entity.Property(t => t.PeriodStart);
 
             // Tags stored as comma-separated string (simple, avoids join table for now)
@@ -44,17 +44,17 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
                         v => v.Aggregate(0, (a, s) => HashCode.Combine(a, s.GetHashCode())),
                         v => v.ToList()));
 
-            // FK to RecurringTemplate (nullable — manual tasks have no template)
-            entity.HasOne<RecurringTemplate>()
+            // FK to RecurringTaskTemplate (nullable — manual tasks have no template)
+            entity.HasOne<RecurringTaskTemplate>()
                 .WithMany()
-                .HasForeignKey(t => t.RecurringTemplateId)
+                .HasForeignKey(t => t.RecurringTaskTemplateId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // DomainEvents is a transient in-memory collection, never persisted
             entity.Ignore(t => t.DomainEvents);
         });
 
-        modelBuilder.Entity<RecurringTemplate>(entity =>
+        modelBuilder.Entity<RecurringTaskTemplate>(entity =>
         {
             entity.ToTable("recurring_templates");
             entity.HasKey(t => t.Id);

@@ -1,4 +1,4 @@
-using MediatR;
+﻿using MediatR;
 using WhatLeft.Tasks.Application.DTOs;
 using WhatLeft.Tasks.Domain.Entities;
 using WhatLeft.Tasks.Domain.Repositories;
@@ -66,5 +66,5 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
     }
 
     private static TaskDto ToDto(TaskItem t) =>
-        new(t.Id, t.Title, t.CreatedAt, t.Duration, t.StartAt, t.FinishAt, t.Tags, t.CancelledAt, t.RecurringTemplateId);
+        new(t.Id, t.Title, t.CreatedAt, t.Duration, t.StartAt, t.FinishAt, t.Tags, t.CancelledAt, t.RecurringTaskTemplateId);
 }

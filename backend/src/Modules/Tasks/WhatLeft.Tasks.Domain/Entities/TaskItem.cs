@@ -1,4 +1,4 @@
-using WhatLeft.Tasks.Domain.Events;
+﻿using WhatLeft.Tasks.Domain.Events;
 using WhatLeft.Tasks.Domain.Primitives;
 
 namespace WhatLeft.Tasks.Domain.Entities;
@@ -20,7 +20,7 @@ public sealed class TaskItem : AggregateRoot
     public List<string> Tags { get; private set; } = [];
 
     /// <summary>Links this instance to the recurring template that generated it.</summary>
-    public Guid? RecurringTemplateId { get; private set; }
+    public Guid? RecurringTaskTemplateId { get; private set; }
 
     /// <summary>Start of the period (week or day) this instance belongs to.</summary>
     public DateTimeOffset? PeriodStart { get; private set; }
@@ -50,7 +50,7 @@ public sealed class TaskItem : AggregateRoot
     }
 
     /// <summary>Creates a task instance generated from a recurring template.</summary>
-    public static TaskItem CreateFromTemplate(RecurringTemplate template, DateTimeOffset periodStart) =>
+    public static TaskItem CreateFromTemplate(RecurringTaskTemplate template, DateTimeOffset periodStart) =>
         new()
         {
             Id = Guid.NewGuid(),
@@ -58,7 +58,7 @@ public sealed class TaskItem : AggregateRoot
             CreatedAt = DateTimeOffset.UtcNow,
             Duration = template.Duration,
             Tags = [.. template.Tags],
-            RecurringTemplateId = template.Id,
+            RecurringTaskTemplateId = template.Id,
             PeriodStart = periodStart
         };
 
