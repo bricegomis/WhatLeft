@@ -68,4 +68,15 @@ export class TasksApiService {
       throw new Error(`HTTP error! status: ${response.status}`)
     }
   }
+
+  static async reactivateTask(id: string): Promise<Task> {
+    const response = await fetch(`${API_BASE_URL}/tasks/${id}/reactivate`, {
+      method: 'POST',
+      headers: authHeaders()
+    })
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`)
+    }
+    return response.json()
+  }
 }

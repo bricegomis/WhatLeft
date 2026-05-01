@@ -45,6 +45,13 @@ public static class TasksEndpoints
             return deleted ? Results.NoContent() : Results.NotFound();
         });
 
+        // POST /tasks/{id}/reactivate — move task back to active (clears finishAt + cancelledAt)
+        group.MapPost("/{id:guid}/reactivate", async (Guid id, TaskService service, CancellationToken ct) =>
+        {
+            var task = await service.ReactivateAsync(id, ct);
+            return task is null ? Results.NotFound() : Results.Ok(task);
+        });
+
         return app;
     }
 }

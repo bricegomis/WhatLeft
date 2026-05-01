@@ -1,17 +1,6 @@
 ﻿<template>
   <AdminLayout>
-    <template #actions>
-      <v-btn
-        color="primary"
-        prepend-icon="mdi-plus"
-        @click="openCreateDialog"
-        :disabled="isLoading"
-        class="me-2"
-      >
-        <span class="d-none d-sm-inline">Nouvelle récurrence</span>
-        <span class="d-sm-none">Nouvelle</span>
-      </v-btn>
-    </template>
+
 
     <v-alert v-if="hasError" type="error" class="mb-6" dismissible @click:close="clearError">
       {{ error }}
@@ -259,6 +248,21 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
+
+    <!-- FAB ajout récurrence -->
+    <v-btn
+      color="primary"
+      icon
+      size="large"
+      style="position: fixed; bottom: 28px; right: 28px; z-index: 1000;"
+      :disabled="isLoading"
+      @click="openCreateDialog"
+      elevation="4"
+    >
+      <v-icon size="28">mdi-plus</v-icon>
+      <v-tooltip activator="parent" location="start">Nouvelle récurrence</v-tooltip>
+    </v-btn>
+
   </AdminLayout>
 </template>
 

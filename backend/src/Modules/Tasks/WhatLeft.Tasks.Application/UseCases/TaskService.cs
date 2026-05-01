@@ -65,6 +65,17 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
         return true;
     }
 
+    public async Task<TaskDto?> ReactivateAsync(Guid id, CancellationToken ct = default)
+    {
+        var task = await repository.GetByIdAsync(id, ct);
+        if (task is null) return null;
+
+        task.Reactivate();
+        repository.Update(task);
+        await repository.SaveChangesAsync(ct);
+        return ToDto(task);
+    }
+
     private static TaskDto ToDto(TaskItem t) =>
         new(t.Id, t.Title, t.CreatedAt, t.Duration, t.StartAt, t.FinishAt, t.Tags, t.CancelledAt, t.RecurringTaskTemplateId);
 }

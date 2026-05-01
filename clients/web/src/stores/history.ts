@@ -1,5 +1,7 @@
 import { defineStore } from 'pinia'
 import { RecurringApiService } from '../services/recurringApi'
+import { TasksApiService } from '../services/tasksApi'
+import { useTasksStore } from './tasks'
 import type { Task } from './tasks'
 
 export const useHistoryStore = defineStore('history', {
@@ -31,6 +33,18 @@ export const useHistoryStore = defineStore('history', {
 
     clearError() {
       this.error = null
+    },
+
+    async reactivateTask(id: string) {
+      this.error = null
+      try {
+        await TasksApiService.reactivateTask(id)
+        this.items = this.items.filter(t => t.id !== id)
+        // Refresh active tasks list
+        useTasksStore().fetchTasks()
+      } catch (e) {
+        this.error = e instanceof Error ? e.message : 'Erreur lors de la réactivation'
+      }
     }
   }
 })

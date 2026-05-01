@@ -53,6 +53,17 @@
                     >{{ tag }}</v-chip>
                   </span>
                 </v-list-item-subtitle>
+                <template #append>
+                  <v-btn
+                    icon="mdi-restore"
+                    variant="plain"
+                    color="primary"
+                    size="small"
+                    title="Réactiver"
+                    :disabled="isLoading"
+                    @click="reactivate(task.id)"
+                  />
+                </template>
               </v-list-item>
               <v-divider v-if="idx < finishedItems.length - 1" inset />
             </template>
@@ -88,6 +99,17 @@
                     >{{ tag }}</v-chip>
                   </span>
                 </v-list-item-subtitle>
+                <template #append>
+                  <v-btn
+                    icon="mdi-restore"
+                    variant="plain"
+                    color="primary"
+                    size="small"
+                    title="Réactiver"
+                    :disabled="isLoading"
+                    @click="reactivate(task.id)"
+                  />
+                </template>
               </v-list-item>
               <v-divider v-if="idx < cancelledItems.length - 1" inset />
             </template>
@@ -110,6 +132,10 @@ import { useHistoryStore } from '../stores/history'
 
 const historyStore = useHistoryStore()
 const { items, isLoading, hasError, error, finishedItems, cancelledItems } = storeToRefs(historyStore)
+
+async function reactivate(id: string) {
+  await historyStore.reactivateTask(id)
+}
 
 const tab = ref('finished')
 

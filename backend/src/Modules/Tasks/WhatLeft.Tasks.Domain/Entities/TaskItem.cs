@@ -69,6 +69,13 @@ public sealed class TaskItem : AggregateRoot
             CancelledAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>Reactivates a finished or cancelled task by clearing completion/cancellation flags.</summary>
+    public void Reactivate()
+    {
+        FinishAt = null;
+        CancelledAt = null;
+    }
+
     /// <summary>
     /// Updates allowed fields. Raises TaskCompletedEvent when FinishAt is set for the first time.
     /// This is the single place in the codebase where TaskCompletedEvent is raised.

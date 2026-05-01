@@ -176,6 +176,15 @@
                 </span>
                 <v-chip v-for="tag in task.tags" :key="tag" size="x-small" variant="tonal" color="primary">{{ tag }}</v-chip>
               </div>
+              <div v-if="taskRecurrenceType(task)" style="position:absolute; bottom:0; right:0;">
+                <v-tooltip :text="taskRecurrenceType(task) === 'Daily' ? 'Journalier' : 'Hebdomadaire'" location="start">
+                  <template #activator="{ props }">
+                    <v-icon v-bind="props" size="14" color="deep-purple-lighten-2">
+                      {{ taskRecurrenceType(task) === 'Daily' ? 'mdi-calendar-today' : 'mdi-calendar-week' }}
+                    </v-icon>
+                  </template>
+                </v-tooltip>
+              </div>
             </div>
 
             <!-- Bouton supprimer (desktop uniquement, sur hover) -->
@@ -391,11 +400,20 @@ import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
+import { useRecurringStore } from '../stores/recurring'
 import AdminLayout from '../layouts/AdminLayout.vue'
 import type { Task } from '../stores/tasks'
 
 const tasksStore = useTasksStore()
 const { tasks, isLoading, hasError, error } = storeToRefs(tasksStore)
+
+const recurringStore = useRecurringStore()
+const { templates: recurringTemplates } = storeToRefs(recurringStore)
+
+function taskRecurrenceType(task: Task): 'Daily' | 'Weekly' | null {
+  if (!task.recurringTaskTemplateId) return null
+  return recurringTemplates.value.find(t => t.id === task.recurringTaskTemplateId)?.recurrenceType ?? null
+}
 const { mobile } = useDisplay()
 const router = useRouter()
 
@@ -622,5 +640,6 @@ const clearError = () => {
 
 onMounted(() => {
   tasksStore.fetchTasks()
+  recurringStore.fetchTemplates()
 })
 </script>
