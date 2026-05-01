@@ -7,7 +7,23 @@
         @click.stop="drawer = !drawer"
       />
 
-      <v-toolbar-title>WhatLeft</v-toolbar-title>
+      <div class="d-flex flex-column justify-center" style="min-width: 0;">
+        <v-toolbar-title class="text-subtitle-1 text-sm-h6 font-weight-bold mb-0" style="line-height: 1.2;">
+          {{ pageTitle }}
+        </v-toolbar-title>
+        <div
+          v-if="pageSubtitle && $vuetify.display.smAndUp"
+          class="text-caption text-medium-emphasis text-truncate"
+          style="line-height: 1.2;"
+        >
+          {{ pageSubtitle }}
+        </div>
+      </div>
+
+      <v-spacer />
+
+      <!-- Slot pour les actions de page (boutons spécifiques) -->
+      <slot name="actions" />
 
       <template v-if="$vuetify.display.mdAndUp">
         <v-text-field
@@ -18,7 +34,7 @@
           density="comfortable"
           hide-details
           style="max-width: 260px"
-          class="mr-4"
+          class="mx-4"
         />
       </template>
 
@@ -117,6 +133,8 @@ const menuItems = [
 ]
 
 const route = useRoute()
+const pageTitle = computed(() => (route.meta.title as string) ?? 'WhatLeft')
+const pageSubtitle = computed(() => (route.meta.subtitle as string) ?? '')
 const isActive = (path: string) => route.path === path
 </script>
 

@@ -1,17 +1,5 @@
 <template>
   <AdminLayout>
-    <!-- Page Header -->
-    <v-row class="mb-4 mb-sm-6">
-      <v-col cols="12">
-        <div>
-          <h1 class="text-h5 text-sm-h4 font-weight-bold mb-2">Calendrier</h1>
-          <p class="text-body-2 text-sm-body-1 text-medium-emphasis mb-0">
-            Glissez les tâches à gauche sur le calendrier pour les planifier.
-          </p>
-        </div>
-      </v-col>
-    </v-row>
-
     <!-- Layout: Tasks List + Calendar -->
     <v-row class="mb-6">
       <!-- Left: Tasks Cards -->

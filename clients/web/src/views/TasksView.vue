@@ -1,27 +1,17 @@
 <template>
   <AdminLayout>
-    <!-- Page Header -->
-    <v-row class="mb-6">
-      <v-col cols="12">
-        <div class="d-flex flex-column flex-sm-row justify-space-between align-start align-sm-center gap-3">
-          <div>
-            <h1 class="text-h5 text-sm-h4 font-weight-bold mb-2">Liste des tâches</h1>
-            <p class="text-body-2 text-sm-body-1 text-medium-emphasis mb-0">
-              Suivre, planifier et terminer les tâches.
-            </p>
-          </div>
-          <v-btn
-            color="primary"
-            prepend-icon="mdi-plus"
-            @click="openModal"
-            :disabled="isLoading"
-            :block="$vuetify.display.xs"
-          >
-            Nouvelle tâche
-          </v-btn>
-        </div>
-      </v-col>
-    </v-row>
+    <template #actions>
+      <v-btn
+        color="primary"
+        prepend-icon="mdi-plus"
+        @click="openModal"
+        :disabled="isLoading"
+        class="me-2"
+      >
+        <span class="d-none d-sm-inline">Nouvelle tâche</span>
+        <span class="d-sm-none">Nouvelle</span>
+      </v-btn>
+    </template>
 
     <!-- Error Messages -->
     <v-alert

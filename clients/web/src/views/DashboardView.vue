@@ -1,27 +1,16 @@
 <template>
   <AdminLayout>
-    <div>
-      <!-- Page Header -->
-      <v-row class="mb-6">
-        <v-col cols="12">
-          <div class="d-flex justify-space-between align-center">
-            <div>
-              <h1 class="text-h4 font-weight-bold mb-2">Tableau de bord</h1>
-              <p class="text-body-1 text-medium-emphasis mb-0">
-                Vue d'ensemble de l'activité et des performances.
-              </p>
-            </div>
-            <v-btn
-              color="primary"
-              prepend-icon="mdi-plus"
-              size="large"
-            >
-              Nouvelle action
-            </v-btn>
-          </div>
-        </v-col>
-      </v-row>
+    <template #actions>
+      <v-btn
+        color="primary"
+        prepend-icon="mdi-plus"
+        class="me-2"
+      >
+        <span class="d-none d-sm-inline">Nouvelle action</span>
+      </v-btn>
+    </template>
 
+    <div>
       <!-- Stats Cards -->
       <v-row class="mb-6">
         <v-col cols="12" md="4">

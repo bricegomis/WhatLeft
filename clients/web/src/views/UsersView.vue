@@ -1,16 +1,5 @@
 <template>
   <AdminLayout>
-    <v-row class="mb-6">
-      <v-col cols="12">
-        <div>
-          <h1 class="text-h4 font-weight-bold mb-2">Mon profil</h1>
-          <p class="text-body-1 text-medium-emphasis mb-0">
-            Informations de votre compte Auth0.
-          </p>
-        </div>
-      </v-col>
-    </v-row>
-
     <v-row>
       <v-col cols="12" md="4">
         <v-card class="pa-4 text-center">

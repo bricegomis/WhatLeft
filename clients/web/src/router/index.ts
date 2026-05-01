@@ -8,10 +8,34 @@ import LoginView from '../views/LoginView.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginView },
-  { path: '/', name: 'Dashboard', component: DashboardView, beforeEnter: authGuard },
-  { path: '/tasks', name: 'Tasks', component: TasksView, beforeEnter: authGuard },
-  { path: '/calendar', name: 'Calendar', component: CalendarView, beforeEnter: authGuard },
-  { path: '/users', name: 'Users', component: UsersView, beforeEnter: authGuard },
+  {
+    path: '/',
+    name: 'Dashboard',
+    component: DashboardView,
+    beforeEnter: authGuard,
+    meta: { title: 'Tableau de bord', subtitle: "Vue d'ensemble de l'activité et des performances." }
+  },
+  {
+    path: '/tasks',
+    name: 'Tasks',
+    component: TasksView,
+    beforeEnter: authGuard,
+    meta: { title: 'Liste des tâches', subtitle: 'Suivre, planifier et terminer les tâches.' }
+  },
+  {
+    path: '/calendar',
+    name: 'Calendar',
+    component: CalendarView,
+    beforeEnter: authGuard,
+    meta: { title: 'Calendrier', subtitle: 'Glissez les tâches à gauche sur le calendrier pour les planifier.' }
+  },
+  {
+    path: '/users',
+    name: 'Users',
+    component: UsersView,
+    beforeEnter: authGuard,
+    meta: { title: 'Mon profil', subtitle: 'Informations de votre compte Auth0.' }
+  },
 ]
 
 const router = createRouter({
