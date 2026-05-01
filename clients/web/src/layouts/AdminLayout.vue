@@ -61,7 +61,7 @@
     <!-- DRAWER -->
     <v-navigation-drawer
       v-model="drawer"
-      :location="$vuetify.display.mobile ? 'bottom' : 'left'"
+      :location="$vuetify.display.mobile ? 'top' : 'left'"
       :temporary="$vuetify.display.mobile"
       :permanent="!$vuetify.display.mobile"
       width="260"
@@ -82,18 +82,6 @@
           <v-list-item-title>{{ item.title }}</v-list-item-title>
         </v-list-item>
       </v-list>
-
-      <template #append>
-        <v-divider />
-        <v-list nav dense>
-          <v-list-item @click="handleLogout">
-            <template #prepend>
-              <v-icon>mdi-logout</v-icon>
-            </template>
-            <v-list-item-title>Déconnexion</v-list-item-title>
-          </v-list-item>
-        </v-list>
-      </template>
     </v-navigation-drawer>
 
     <!-- MAIN CONTENT -->
