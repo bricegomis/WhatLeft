@@ -240,8 +240,6 @@ function openEditDialog(tpl: RecurringTaskTemplate) {
     title: tpl.title,
     duration: tpl.duration,
     recurrenceType: tpl.recurrenceType,
-
-    resetHour: tpl.resetHour,
     tags: [...tpl.tags]
   }
   dialog.value = true

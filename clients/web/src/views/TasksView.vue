@@ -54,9 +54,10 @@
         item-key="id"
       >
         <template #item.title="{ item }">
-          <div class="d-flex align-center gap-2">
+          <div class="d-flex align-center gap-2 cursor-pointer" @click="openEditDialog(item)">
             <v-checkbox
               :checked="!!item.finishAt"
+              @click.stop
               @change="toggleFinish(item.id)"
               hide-details
               :disabled="isLoading"
@@ -161,7 +162,7 @@
             @touchstart="onTouchStart(task.id, $event)"
             @touchmove="onTouchMove(task.id, $event)"
             @touchend="onTouchEnd(task.id, $event)"
-            @click="getSwipeOffset(task.id) !== 0 ? closeSwipe(task.id) : undefined"
+            @click="getSwipeOffset(task.id) !== 0 ? closeSwipe(task.id) : openEditDialog(task)"
           >
             <!-- Cercle checkbox -->
             <v-btn
@@ -175,7 +176,8 @@
             />
 
             <!-- Texte -->
-            <div class="flex-grow-1" style="min-width:0;">
+            <div class="flex-grow-1" style="min-width:0; position:relative;">
+              <span style="position:absolute; top:0; right:0; font-size:10px; color:#999; white-space:nowrap;">{{ task.duration }} min</span>
               <div :class="['text-body-1', { 'text-decoration-line-through text-medium-emphasis': task.finishAt }]">
                 {{ task.title }}
               </div>
@@ -219,6 +221,97 @@
         Créer une tâche
       </v-btn>
     </v-card>
+
+    <!-- Edit Task Dialog -->
+    <v-dialog
+      v-model="editDialog"
+      max-width="500"
+      :fullscreen="$vuetify.display.xs"
+    >
+      <v-card v-if="editingTask">
+        <v-card-title class="d-flex align-center">
+          <span class="flex-grow-1">Modifier la tâche</span>
+          <v-btn
+            v-if="editingTask.recurringTaskTemplateId"
+            size="small"
+            variant="tonal"
+            color="primary"
+            prepend-icon="mdi-repeat"
+            @click="goToTemplate(editingTask.recurringTaskTemplateId!)"
+          >
+            Récurrence
+          </v-btn>
+        </v-card-title>
+
+        <v-card-text>
+          <v-text-field
+            v-model="editTitle"
+            label="Titre"
+            :disabled="isSavingEdit"
+            required
+            class="mb-3"
+          />
+          <v-text-field
+            v-model.number="editDuration"
+            label="Durée (minutes)"
+            type="number"
+            min="1"
+            step="5"
+            :disabled="isSavingEdit"
+            class="mb-3"
+          />
+          <v-text-field
+            v-model="editStartAt"
+            label="Planifié le"
+            type="datetime-local"
+            :disabled="isSavingEdit"
+            class="mb-3"
+          />
+          <v-combobox
+            v-model="editTags"
+            :items="allExistingTags"
+            label="Tags"
+            multiple
+            chips
+            closable-chips
+            clearable
+            :disabled="isSavingEdit"
+          />
+        </v-card-text>
+
+        <v-card-actions>
+          <v-btn
+            color="error"
+            variant="text"
+            prepend-icon="mdi-delete-outline"
+            :disabled="isSavingEdit"
+            @click="editDialogDelete"
+          >
+            Supprimer
+          </v-btn>
+          <v-spacer />
+          <v-btn variant="text" @click="closeEditDialog" :disabled="isSavingEdit">Annuler</v-btn>
+          <v-btn
+            v-if="!editingTask.finishAt"
+            color="success"
+            variant="tonal"
+            prepend-icon="mdi-check"
+            :disabled="isSavingEdit"
+            @click="editDialogFinish"
+          >
+            Terminer
+          </v-btn>
+          <v-btn
+            color="primary"
+            :disabled="!editTitle.trim() || isSavingEdit"
+            :loading="isSavingEdit"
+            @click="saveEdit"
+          >
+            Enregistrer
+          </v-btn>
+        </v-card-actions>
+      </v-card>
+    </v-dialog>
 
     <!-- Create Task Dialog -->
     <v-dialog
@@ -291,14 +384,75 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
+import type { Task } from '../stores/tasks'
 
 const tasksStore = useTasksStore()
 const { tasks, isLoading, hasError, error } = storeToRefs(tasksStore)
 const { mobile } = useDisplay()
+const router = useRouter()
+
+// ── Dialog de détail/édition ────────────────────────────────────────────────
+const editDialog = ref(false)
+const editingTask = ref<Task | null>(null)
+const editTitle = ref('')
+const editDuration = ref(1)
+const editStartAt = ref('')
+const editTags = ref<string[]>([])
+const isSavingEdit = ref(false)
+
+function openEditDialog(task: Task) {
+  if (getSwipeOffset(task.id) !== 0) { closeSwipe(task.id); return }
+  editingTask.value = task
+  editTitle.value = task.title
+  editDuration.value = task.duration
+  editStartAt.value = task.startAt ? new Date(task.startAt).toISOString().slice(0, 16) : ''
+  editTags.value = [...task.tags]
+  editDialog.value = true
+}
+
+function closeEditDialog() {
+  editDialog.value = false
+  editingTask.value = null
+}
+
+async function saveEdit() {
+  if (!editingTask.value || !editTitle.value.trim()) return
+  isSavingEdit.value = true
+  try {
+    await tasksStore.updateTask(editingTask.value.id, {
+      title: editTitle.value,
+      duration: editDuration.value,
+      startAt: editStartAt.value ? new Date(editStartAt.value).toISOString() : null,
+      tags: editTags.value
+    })
+    closeEditDialog()
+  } finally {
+    isSavingEdit.value = false
+  }
+}
+
+async function editDialogFinish() {
+  if (!editingTask.value) return
+  closeEditDialog()
+  await tasksStore.toggleFinish(editingTask.value.id)
+}
+
+async function editDialogDelete() {
+  if (!editingTask.value) return
+  const id = editingTask.value.id
+  closeEditDialog()
+  await tasksStore.removeTask(id)
+}
+
+function goToTemplate(templateId: string) {
+  closeEditDialog()
+  router.push({ path: '/recurring', query: { highlight: templateId } })
+}
 
 // ── Mode d'affichage ─────────────────────────────────────────────────────────
 const STORAGE_KEY = 'whatleft.tasks.viewMode'

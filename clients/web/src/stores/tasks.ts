@@ -9,7 +9,7 @@ export interface Task {
   startAt: string | null
   finishAt: string | null
   cancelledAt: string | null
-  RecurringTaskTemplateId: string | null
+  recurringTaskTemplateId: string | null
   tags: string[]
 }
 
