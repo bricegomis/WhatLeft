@@ -39,14 +39,6 @@
       </v-btn>
     </v-alert>
 
-    <v-alert
-      v-if="!isApiAvailable"
-      type="error"
-      class="mb-6"
-    >
-      Le backend de l'API n'est pas disponible. Démarrez le serveur dans le dossier <code>backend/</code>.
-    </v-alert>
-
     <!-- Loading State -->
     <div v-if="isLoading && tasks.length === 0" class="text-center pa-12">
       <v-progress-circular indeterminate color="primary" class="mb-4" />
@@ -305,7 +297,7 @@ import { useTasksStore } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
 
 const tasksStore = useTasksStore()
-const { tasks, isLoading, hasError, error, isApiAvailable } = storeToRefs(tasksStore)
+const { tasks, isLoading, hasError, error } = storeToRefs(tasksStore)
 const { mobile } = useDisplay()
 
 // ── Mode d'affichage ─────────────────────────────────────────────────────────
