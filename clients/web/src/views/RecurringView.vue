@@ -34,17 +34,54 @@
       </v-col>
     </v-row>
 
+    <!-- Filtres -->
+    <v-row v-if="templates.length > 0" class="mb-2" dense align="center">
+      <v-col cols="12" sm="auto">
+        <v-chip-group v-model="filterType" column>
+          <v-chip
+            v-for="opt in recurrenceOptions"
+            :key="opt.value"
+            :value="opt.value"
+            filter
+            size="small"
+            variant="outlined"
+          >
+            {{ opt.label }}
+          </v-chip>
+        </v-chip-group>
+      </v-col>
+      <v-col cols="12" sm>
+        <v-autocomplete
+          v-model="filterTags"
+          :items="allTemplateTags"
+          label="Tags"
+          multiple
+          chips
+          closable-chips
+          clearable
+          density="compact"
+          variant="outlined"
+          hide-details
+        />
+      </v-col>
+      <v-col v-if="hasActiveFilters" cols="auto">
+        <v-btn variant="text" size="small" color="primary" @click="filterTags = []; filterType = null">
+          Réinitialiser
+        </v-btn>
+      </v-col>
+    </v-row>
+
     <div v-if="isLoading && templates.length === 0" class="text-center pa-12">
       <v-progress-circular indeterminate color="primary" class="mb-4" />
       <p class="text-body-1">Chargement...</p>
     </div>
 
     <!-- Liste des templates actifs -->
-    <template v-if="activeTemplates.length > 0">
+    <template v-if="filteredActiveTemplates.length > 0">
       <h3 class="text-subtitle-1 font-weight-medium mb-3">Actives</h3>
       <v-card class="mb-6">
         <v-list lines="two">
-          <template v-for="(tpl, idx) in activeTemplates" :key="tpl.id">
+          <template v-for="(tpl, idx) in filteredActiveTemplates" :key="tpl.id">
             <v-list-item>
               <template #prepend>
                 <v-icon color="primary" class="mr-2">
@@ -96,18 +133,18 @@
                 />
               </template>
             </v-list-item>
-            <v-divider v-if="idx < activeTemplates.length - 1" inset />
+            <v-divider v-if="idx < filteredActiveTemplates.length - 1" inset />
           </template>
         </v-list>
       </v-card>
     </template>
 
     <!-- Templates inactifs -->
-    <template v-if="inactiveTemplates.length > 0">
+    <template v-if="filteredInactiveTemplates.length > 0">
       <h3 class="text-subtitle-1 font-weight-medium mb-3 text-medium-emphasis">Inactives</h3>
       <v-card class="mb-6" color="grey-lighten-4">
         <v-list lines="two">
-          <template v-for="(tpl, idx) in inactiveTemplates" :key="tpl.id">
+          <template v-for="(tpl, idx) in filteredInactiveTemplates" :key="tpl.id">
             <v-list-item>
               <template #prepend>
                 <v-icon color="grey" class="mr-2">mdi-repeat-off</v-icon>
@@ -126,7 +163,7 @@
                 />
               </template>
             </v-list-item>
-            <v-divider v-if="idx < inactiveTemplates.length - 1" inset />
+            <v-divider v-if="idx < filteredInactiveTemplates.length - 1" inset />
           </template>
         </v-list>
       </v-card>
@@ -284,6 +321,32 @@ const allTags = computed(() => {
   for (const t of templates.value) for (const tag of t.tags) set.add(tag)
   return [...set].sort()
 })
+
+const allTemplateTags = computed(() => {
+  const set = new Set<string>()
+  for (const t of templates.value) for (const tag of t.tags) set.add(tag)
+  return [...set].sort()
+})
+
+const filterTags = ref<string[]>([])
+const filterType = ref<RecurrenceType | null>(null)
+const hasActiveFilters = computed(() => filterTags.value.length > 0 || filterType.value !== null)
+
+const filteredActiveTemplates = computed(() =>
+  activeTemplates.value.filter(tpl => {
+    const matchType = !filterType.value || tpl.recurrenceType === filterType.value
+    const matchTags = filterTags.value.length === 0 || filterTags.value.every(tag => tpl.tags.includes(tag))
+    return matchType && matchTags
+  })
+)
+
+const filteredInactiveTemplates = computed(() =>
+  inactiveTemplates.value.filter(tpl => {
+    const matchType = !filterType.value || tpl.recurrenceType === filterType.value
+    const matchTags = filterTags.value.length === 0 || filterTags.value.every(tag => tpl.tags.includes(tag))
+    return matchType && matchTags
+  })
+)
 
 const dialog = ref(false)
 const isSaving = ref(false)
