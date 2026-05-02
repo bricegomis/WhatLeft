@@ -76,7 +76,7 @@ export class RecurringApiService {
     if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`)
   }
 
-  static async advanceAllByType(type: 'Daily' | 'Weekly'): Promise<void> {
+  static async advanceAllByType(type: 'Daily' | 'Weekly' | 'Monthly'): Promise<void> {
     const response = await fetch(`${API_BASE_URL}/recurring-templates/advance-all?type=${type}`, {
       method: 'POST',
       headers: authHeaders()

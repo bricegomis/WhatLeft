@@ -94,7 +94,7 @@ export const useRecurringStore = defineStore('recurring', {
       }
     },
 
-    async advanceAllByType(type: 'Daily' | 'Weekly') {
+    async advanceAllByType(type: 'Daily' | 'Weekly' | 'Monthly') {
       this.error = null
       try {
         await RecurringApiService.advanceAllByType(type)

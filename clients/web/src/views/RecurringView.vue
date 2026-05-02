@@ -6,34 +6,6 @@
       {{ error }}
     </v-alert>
 
-    <!-- Boutons reset global -->
-    <v-row class="mb-4" dense>
-      <v-col cols="12" sm="6">
-        <v-btn
-          block
-          variant="tonal"
-          color="deep-purple"
-          prepend-icon="mdi-skip-next"
-          :disabled="isLoading || !hasDailyActive"
-          @click="confirmAdvanceAll('Daily')"
-        >
-          Terminer la journée
-        </v-btn>
-      </v-col>
-      <v-col cols="12" sm="6">
-        <v-btn
-          block
-          variant="tonal"
-          color="indigo"
-          prepend-icon="mdi-calendar-arrow-right"
-          :disabled="isLoading || !hasWeeklyActive"
-          @click="confirmAdvanceAll('Weekly')"
-        >
-            Terminer la semaine
-        </v-btn>
-      </v-col>
-    </v-row>
-
     <!-- Filtres -->
     <v-row v-if="templates.length > 0" class="mb-2" dense align="center">
       <v-col cols="12" sm="auto">
@@ -185,14 +157,16 @@
     <v-dialog v-model="advanceAllDialog" max-width="420" persistent>
       <v-card>
         <v-card-title class="d-flex align-center ga-2">
-          <v-icon color="deep-purple">{{ advanceAllType === 'Daily' ? 'mdi-skip-next' : 'mdi-calendar-arrow-right' }}</v-icon>
-          {{ advanceAllType === 'Daily' ? 'Passer à demain' : 'Passer à la semaine prochaine' }}
+          <v-icon color="deep-purple">
+            {{ advanceAllType === 'Daily' ? 'mdi-skip-next' : advanceAllType === 'Monthly' ? 'mdi-calendar-month' : 'mdi-calendar-arrow-right' }}
+          </v-icon>
+          {{ advanceAllType === 'Daily' ? 'Passer à demain' : advanceAllType === 'Monthly' ? 'Passer au mois prochain' : 'Passer à la semaine prochaine' }}
         </v-card-title>
         <v-card-text>
           Toutes les tâches non terminées
-          <strong>{{ advanceAllType === 'Daily' ? "d'aujourd'hui" : 'de cette semaine' }}</strong>
+          <strong>{{ advanceAllType === 'Daily' ? "d'aujourd'hui" : advanceAllType === 'Monthly' ? 'de ce mois' : 'de cette semaine' }}</strong>
           seront annulées et remplacées par de nouvelles tâches
-          <strong>{{ advanceAllType === 'Daily' ? 'de demain' : 'de la semaine prochaine' }}</strong>.
+          <strong>{{ advanceAllType === 'Daily' ? 'de demain' : advanceAllType === 'Monthly' ? 'du mois prochain' : 'de la semaine prochaine' }}</strong>.
         </v-card-text>
         <v-card-actions>
           <v-spacer />
@@ -286,15 +260,78 @@
       </v-card>
     </v-dialog>
 
-    <!-- FAB ajout récurrence -->
+    <!-- FAB avancer période (speed dial) -->
+    <div
+      v-if="hasDailyActive || hasWeeklyActive || hasMonthlyActive"
+      style="position: fixed; bottom: 96px; right: 28px; z-index: 1000;"
+    >
+      <v-speed-dial v-model="fabAdvance" transition="fade-transition">
+        <template #activator="{ props: activatorProps }">
+          <v-btn
+            v-bind="activatorProps"
+            color="deep-purple"
+            icon
+            size="large"
+            elevation="4"
+            :disabled="isLoading"
+          >
+            <v-icon size="28">{{ fabAdvance ? 'mdi-close' : 'mdi-calendar-arrow-right' }}</v-icon>
+          </v-btn>
+        </template>
+
+        <v-btn
+          v-if="hasMonthlyActive"
+          key="monthly"
+          color="deep-purple"
+          prepend-icon="mdi-calendar-month"
+          variant="elevated"
+          size="large"
+          rounded
+          :disabled="isLoading"
+          @click="confirmAdvanceAll('Monthly')"
+        >
+          Terminer le mois
+        </v-btn>
+
+        <v-btn
+          v-if="hasWeeklyActive"
+          key="weekly"
+          color="indigo"
+          prepend-icon="mdi-calendar-arrow-right"
+          variant="elevated"
+          size="large"
+          rounded
+          :disabled="isLoading"
+          @click="confirmAdvanceAll('Weekly')"
+        >
+          Terminer la semaine
+        </v-btn>
+
+        <v-btn
+          v-if="hasDailyActive"
+          key="daily"
+          color="deep-purple"
+          prepend-icon="mdi-skip-next"
+          variant="elevated"
+          size="large"
+          rounded
+          :disabled="isLoading"
+          @click="confirmAdvanceAll('Daily')"
+        >
+          Terminer la journée
+        </v-btn>
+      </v-speed-dial>
+    </div>
+
+    <!-- FAB nouvelle récurrence -->
     <v-btn
       color="primary"
       icon
       size="large"
+      elevation="4"
       style="position: fixed; bottom: 28px; right: 28px; z-index: 1000;"
       :disabled="isLoading"
       @click="openCreateDialog"
-      elevation="4"
     >
       <v-icon size="28">mdi-plus</v-icon>
       <v-tooltip activator="parent" location="start">Nouvelle récurrence</v-tooltip>
@@ -349,6 +386,7 @@ const filteredInactiveTemplates = computed(() =>
 )
 
 const dialog = ref(false)
+const fabAdvance = ref(false)
 const isSaving = ref(false)
 const editingId = ref<string | null>(null)
 
@@ -433,13 +471,14 @@ async function triggerNow(id: string) {
 }
 
 const advanceAllDialog = ref(false)
-const advanceAllType = ref<'Daily' | 'Weekly'>('Daily')
+const advanceAllType = ref<'Daily' | 'Weekly' | 'Monthly'>('Daily')
 const isAdvancingAll = ref(false)
 
-const hasDailyActive  = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Daily'))
-const hasWeeklyActive = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Weekly'))
+const hasDailyActive   = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Daily'))
+const hasWeeklyActive  = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Weekly'))
+const hasMonthlyActive = computed(() => activeTemplates.value.some(t => t.recurrenceType === 'Monthly'))
 
-function confirmAdvanceAll(type: 'Daily' | 'Weekly') {
+function confirmAdvanceAll(type: 'Daily' | 'Weekly' | 'Monthly') {
   advanceAllType.value = type
   advanceAllDialog.value = true
 }
