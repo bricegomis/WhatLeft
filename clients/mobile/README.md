@@ -68,12 +68,16 @@ Dans `src/services/apiService.ts`, ligne `BASE_URL` :
 
 ### Auth0
 
-L'app est pré-configurée avec les credentials du projet :
-- Domain : `dev-frvj0skig142mzhh.eu.auth0.com`
-- Client ID : `VudQOhonXNUNVMMEBwwVCOpTta8bZ2bC`
+Créer une application **Native** dans Auth0 Dashboard, puis renseigner les variables dans `app.json` (plugin `react-native-auth0`) et `src/services/apiService.ts` :
 
-Dans Auth0 Dashboard → Applications → ajouter une **Native** app, puis :
-- **Allowed Callback URLs** : `com.whatleft.app://dev-frvj0skig142mzhh.eu.auth0.com/android/com.whatleft.app/callback, com.whatleft.app://dev-frvj0skig142mzhh.eu.auth0.com/ios/com.whatleft.app/callback`
+| Variable | Où | Valeur |
+|---|---|---|
+| `domain` | `app.json` → plugin react-native-auth0 | `<VOTRE_DOMAIN>.auth0.com` |
+| `clientId` | `app/_layout.tsx` → `Auth0Provider` | ID de votre application Native |
+| `BASE_URL` | `src/services/apiService.ts` | URL de votre API |
+
+Dans Auth0 Dashboard → votre app Native → onglet **Settings** :
+- **Allowed Callback URLs** : `com.whatleft.app://<VOTRE_DOMAIN>/android/com.whatleft.app/callback, com.whatleft.app://<VOTRE_DOMAIN>/ios/com.whatleft.app/callback`
 - **Allowed Logout URLs** : mêmes valeurs
 
 ## Build production (EAS)
