@@ -10,6 +10,7 @@ namespace WhatLeft.Tasks.Domain.Entities;
 public sealed class RecurringTaskTemplate
 {
     public Guid Id { get; private set; }
+    public string UserId { get; private set; } = string.Empty;
     public string Title { get; private set; } = string.Empty;
     public double Duration { get; private set; }
     public List<string> Tags { get; private set; } = [];
@@ -22,17 +23,20 @@ public sealed class RecurringTaskTemplate
     private RecurringTaskTemplate() { }
 
     public static RecurringTaskTemplate Create(
+        string userId,
         string title,
         double duration,
         List<string> tags,
         RecurrenceType type)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         if (duration <= 0) throw new ArgumentException("Duration must be positive.", nameof(duration));
 
         return new RecurringTaskTemplate
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             Title = title.Trim(),
             Duration = duration,
             Tags = tags.ToList(),

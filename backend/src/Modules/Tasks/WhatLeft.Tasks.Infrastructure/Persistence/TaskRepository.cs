@@ -6,15 +6,15 @@ namespace WhatLeft.Tasks.Infrastructure.Persistence;
 
 public sealed class TaskRepository(TasksDbContext context) : ITaskRepository
 {
-    public async Task<IEnumerable<TaskItem>> GetAllAsync(CancellationToken ct = default) =>
+    public async Task<IEnumerable<TaskItem>> GetAllAsync(string userId, CancellationToken ct = default) =>
         await context.Tasks
-            .Where(t => t.FinishAt == null && t.CancelledAt == null)
+            .Where(t => t.UserId == userId && t.FinishAt == null && t.CancelledAt == null)
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(ct);
 
-    public async Task<IEnumerable<TaskItem>> GetHistoryAsync(CancellationToken ct = default) =>
+    public async Task<IEnumerable<TaskItem>> GetHistoryAsync(string userId, CancellationToken ct = default) =>
         await context.Tasks
-            .Where(t => t.FinishAt != null || t.CancelledAt != null)
+            .Where(t => t.UserId == userId && (t.FinishAt != null || t.CancelledAt != null))
             .OrderByDescending(t => t.CancelledAt ?? t.FinishAt)
             .ToListAsync(ct);
 
@@ -31,6 +31,9 @@ public sealed class TaskRepository(TasksDbContext context) : ITaskRepository
 
     public Task<TaskItem?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         context.Tasks.FirstOrDefaultAsync(t => t.Id == id, ct);
+
+    public Task<TaskItem?> GetByIdForUserAsync(Guid id, string userId, CancellationToken ct = default) =>
+        context.Tasks.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId, ct);
 
     public async Task AddAsync(TaskItem task, CancellationToken ct = default) =>
         await context.Tasks.AddAsync(task, ct);

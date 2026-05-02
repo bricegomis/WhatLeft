@@ -1,13 +1,9 @@
+using System.Security.Claims;
 using WhatLeft.Tasks.Application.DTOs;
 using WhatLeft.Tasks.Application.UseCases;
 
 namespace WhatLeft.Api.Modules.Tasks;
 
-/// <summary>
-/// Registers all Tasks REST endpoints on the app.
-/// Each module exposes a MapXxxEndpoints() extension — Program.cs just calls them all.
-/// Adding a new module = adding one line in Program.cs.
-/// </summary>
 public static class TasksEndpoints
 {
     public static IEndpointRouteBuilder MapTasksEndpoints(this IEndpointRouteBuilder app)
@@ -17,41 +13,45 @@ public static class TasksEndpoints
             .WithTags("Tasks");
 
         // GET /tasks
-        group.MapGet("/", async (TaskService service, CancellationToken ct) =>
-            Results.Ok(await service.GetAllAsync(ct)));
+        group.MapGet("/", async (HttpContext ctx, TaskService service, CancellationToken ct) =>
+            Results.Ok(await service.GetAllAsync(UserId(ctx), ct)));
 
-        // GET /tasks/history — cancelled + finished tasks
-        group.MapGet("/history", async (TaskService service, CancellationToken ct) =>
-            Results.Ok(await service.GetHistoryAsync(ct)));
+        // GET /tasks/history
+        group.MapGet("/history", async (HttpContext ctx, TaskService service, CancellationToken ct) =>
+            Results.Ok(await service.GetHistoryAsync(UserId(ctx), ct)));
 
         // POST /tasks
-        group.MapPost("/", async (CreateTaskRequest request, TaskService service, CancellationToken ct) =>
+        group.MapPost("/", async (HttpContext ctx, CreateTaskRequest request, TaskService service, CancellationToken ct) =>
         {
-            var task = await service.CreateAsync(request, ct);
+            var task = await service.CreateAsync(request, UserId(ctx), ct);
             return Results.Created($"/tasks/{task.Id}", task);
         });
 
         // PUT /tasks/{id}
-        group.MapPut("/{id:guid}", async (Guid id, UpdateTaskRequest request, TaskService service, CancellationToken ct) =>
+        group.MapPut("/{id:guid}", async (HttpContext ctx, Guid id, UpdateTaskRequest request, TaskService service, CancellationToken ct) =>
         {
-            var task = await service.UpdateAsync(id, request, ct);
+            var task = await service.UpdateAsync(id, request, UserId(ctx), ct);
             return task is null ? Results.NotFound() : Results.Ok(task);
         });
 
         // DELETE /tasks/{id}
-        group.MapDelete("/{id:guid}", async (Guid id, TaskService service, CancellationToken ct) =>
+        group.MapDelete("/{id:guid}", async (HttpContext ctx, Guid id, TaskService service, CancellationToken ct) =>
         {
-            var deleted = await service.DeleteAsync(id, ct);
+            var deleted = await service.DeleteAsync(id, UserId(ctx), ct);
             return deleted ? Results.NoContent() : Results.NotFound();
         });
 
-        // POST /tasks/{id}/reactivate — move task back to active (clears finishAt + cancelledAt)
-        group.MapPost("/{id:guid}/reactivate", async (Guid id, TaskService service, CancellationToken ct) =>
+        // POST /tasks/{id}/reactivate
+        group.MapPost("/{id:guid}/reactivate", async (HttpContext ctx, Guid id, TaskService service, CancellationToken ct) =>
         {
-            var task = await service.ReactivateAsync(id, ct);
+            var task = await service.ReactivateAsync(id, UserId(ctx), ct);
             return task is null ? Results.NotFound() : Results.Ok(task);
         });
 
         return app;
     }
+
+    private static string UserId(HttpContext ctx) =>
+        ctx.User.FindFirstValue(ClaimTypes.NameIdentifier)
+            ?? throw new UnauthorizedAccessException("User ID not found in token.");
 }

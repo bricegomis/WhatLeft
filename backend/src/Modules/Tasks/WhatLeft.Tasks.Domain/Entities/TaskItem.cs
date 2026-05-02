@@ -11,6 +11,7 @@ namespace WhatLeft.Tasks.Domain.Entities;
 public sealed class TaskItem : AggregateRoot
 {
     public Guid Id { get; private set; }
+    public string UserId { get; private set; } = string.Empty;
     public string Title { get; private set; } = string.Empty;
     public DateTimeOffset CreatedAt { get; private set; }
     public double Duration { get; private set; }
@@ -30,17 +31,20 @@ public sealed class TaskItem : AggregateRoot
 
     /// <summary>Factory method — the only valid way to create a manual task.</summary>
     public static TaskItem Create(
+        string userId,
         string title,
         double duration,
         DateTimeOffset? startAt,
         List<string>? tags)
     {
+        ArgumentException.ThrowIfNullOrWhiteSpace(userId);
         ArgumentException.ThrowIfNullOrWhiteSpace(title);
         if (duration <= 0) throw new ArgumentException("Duration must be positive.", nameof(duration));
 
         return new TaskItem
         {
             Id = Guid.NewGuid(),
+            UserId = userId,
             Title = title.Trim(),
             CreatedAt = DateTimeOffset.UtcNow,
             Duration = duration,
@@ -54,6 +58,7 @@ public sealed class TaskItem : AggregateRoot
         new()
         {
             Id = Guid.NewGuid(),
+            UserId = template.UserId,
             Title = template.Title,
             CreatedAt = DateTimeOffset.UtcNow,
             Duration = template.Duration,

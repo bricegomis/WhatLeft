@@ -13,21 +13,21 @@ namespace WhatLeft.Tasks.Application.UseCases;
 /// </summary>
 public sealed class TaskService(ITaskRepository repository, IPublisher publisher)
 {
-    public async Task<IEnumerable<TaskDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<TaskDto>> GetAllAsync(string userId, CancellationToken ct = default)
     {
-        var tasks = await repository.GetAllAsync(ct);
+        var tasks = await repository.GetAllAsync(userId, ct);
         return tasks.Select(ToDto);
     }
 
-    public async Task<IEnumerable<TaskDto>> GetHistoryAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<TaskDto>> GetHistoryAsync(string userId, CancellationToken ct = default)
     {
-        var tasks = await repository.GetHistoryAsync(ct);
+        var tasks = await repository.GetHistoryAsync(userId, ct);
         return tasks.Select(ToDto);
     }
 
-    public async Task<TaskDto> CreateAsync(CreateTaskRequest request, CancellationToken ct = default)
+    public async Task<TaskDto> CreateAsync(CreateTaskRequest request, string userId, CancellationToken ct = default)
     {
-        var task = TaskItem.Create(request.Title, request.Duration, request.StartAt, request.Tags);
+        var task = TaskItem.Create(userId, request.Title, request.Duration, request.StartAt, request.Tags);
 
         await repository.AddAsync(task, ct);
         await repository.SaveChangesAsync(ct);
@@ -35,9 +35,9 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
         return ToDto(task);
     }
 
-    public async Task<TaskDto?> UpdateAsync(Guid id, UpdateTaskRequest request, CancellationToken ct = default)
+    public async Task<TaskDto?> UpdateAsync(Guid id, UpdateTaskRequest request, string userId, CancellationToken ct = default)
     {
-        var task = await repository.GetByIdAsync(id, ct);
+        var task = await repository.GetByIdForUserAsync(id, userId, ct);
         if (task is null) return null;
 
         task.Update(request.Title, request.Duration, request.StartAt, request.FinishAt, request.Tags);
@@ -45,8 +45,6 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
         repository.Update(task);
         await repository.SaveChangesAsync(ct);
 
-        // ← Domain events dispatched AFTER persistence (never before)
-        // MediatR delivers them in-process to all registered INotificationHandlers
         foreach (var domainEvent in task.DomainEvents)
             await publisher.Publish(domainEvent, ct);
 
@@ -55,9 +53,9 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
         return ToDto(task);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid id, string userId, CancellationToken ct = default)
     {
-        var task = await repository.GetByIdAsync(id, ct);
+        var task = await repository.GetByIdForUserAsync(id, userId, ct);
         if (task is null) return false;
 
         repository.Remove(task);
@@ -65,9 +63,9 @@ public sealed class TaskService(ITaskRepository repository, IPublisher publisher
         return true;
     }
 
-    public async Task<TaskDto?> ReactivateAsync(Guid id, CancellationToken ct = default)
+    public async Task<TaskDto?> ReactivateAsync(Guid id, string userId, CancellationToken ct = default)
     {
-        var task = await repository.GetByIdAsync(id, ct);
+        var task = await repository.GetByIdForUserAsync(id, userId, ct);
         if (task is null) return null;
 
         task.Reactivate();

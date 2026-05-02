@@ -44,12 +44,12 @@ public sealed class RecurringTaskProcessor(
     }
 
     /// <summary>
-    /// Cancels current period tasks and creates next period task for ALL active templates of a given type.
+    /// Cancels current period tasks and creates next period task for ALL active templates of a given type for a user.
     /// </summary>
-    public async Task AdvanceAllByTypeAsync(RecurrenceType type, CancellationToken ct = default)
+    public async Task AdvanceAllByTypeAsync(RecurrenceType type, string userId, CancellationToken ct = default)
     {
         var templates = await templateRepo.GetAllAsync(ct);
-        foreach (var template in templates.Where(t => t.IsActive && t.RecurrenceType == type))
+        foreach (var template in templates.Where(t => t.IsActive && t.RecurrenceType == type && t.UserId == userId))
             await AdvanceSingleAsync(template, ct);
     }
 

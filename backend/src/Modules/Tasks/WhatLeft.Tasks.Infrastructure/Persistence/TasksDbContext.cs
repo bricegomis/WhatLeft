@@ -25,6 +25,7 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
             entity.HasKey(t => t.Id);
 
             entity.Property(t => t.Id).ValueGeneratedNever();
+            entity.Property(t => t.UserId).IsRequired().HasMaxLength(200);
             entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
             entity.Property(t => t.Duration).IsRequired();
             entity.Property(t => t.CreatedAt).IsRequired();
@@ -60,6 +61,7 @@ public sealed class TasksDbContext(DbContextOptions<TasksDbContext> options) : D
             entity.HasKey(t => t.Id);
 
             entity.Property(t => t.Id).ValueGeneratedNever();
+            entity.Property(t => t.UserId).IsRequired().HasMaxLength(200);
             entity.Property(t => t.Title).IsRequired().HasMaxLength(500);
             entity.Property(t => t.Duration).IsRequired();
             entity.Property(t => t.RecurrenceType).HasConversion<string>().IsRequired();

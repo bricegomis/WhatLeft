@@ -11,8 +11,17 @@ public sealed class RecurringTaskTemplateRepository(TasksDbContext context) : IR
             .OrderByDescending(t => t.CreatedAt)
             .ToListAsync(ct);
 
+    public async Task<IEnumerable<RecurringTaskTemplate>> GetAllForUserAsync(string userId, CancellationToken ct = default) =>
+        await context.RecurringTaskTemplates
+            .Where(t => t.UserId == userId)
+            .OrderByDescending(t => t.CreatedAt)
+            .ToListAsync(ct);
+
     public Task<RecurringTaskTemplate?> GetByIdAsync(Guid id, CancellationToken ct = default) =>
         context.RecurringTaskTemplates.FirstOrDefaultAsync(t => t.Id == id, ct);
+
+    public Task<RecurringTaskTemplate?> GetByIdForUserAsync(Guid id, string userId, CancellationToken ct = default) =>
+        context.RecurringTaskTemplates.FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId, ct);
 
     public async Task AddAsync(RecurringTaskTemplate template, CancellationToken ct = default) =>
         await context.RecurringTaskTemplates.AddAsync(template, ct);

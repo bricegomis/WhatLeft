@@ -11,15 +11,16 @@ public sealed class RecurringTaskTemplateService(
     IRecurringTaskTemplateRepository repository,
     RecurringTaskProcessor processor)
 {
-    public async Task<IEnumerable<RecurringTaskTemplateDto>> GetAllAsync(CancellationToken ct = default)
+    public async Task<IEnumerable<RecurringTaskTemplateDto>> GetAllAsync(string userId, CancellationToken ct = default)
     {
-        var templates = await repository.GetAllAsync(ct);
+        var templates = await repository.GetAllForUserAsync(userId, ct);
         return templates.Select(ToDto);
     }
 
-    public async Task<RecurringTaskTemplateDto> CreateAsync(CreateRecurringTaskTemplateRequest request, CancellationToken ct = default)
+    public async Task<RecurringTaskTemplateDto> CreateAsync(CreateRecurringTaskTemplateRequest request, string userId, CancellationToken ct = default)
     {
         var template = RecurringTaskTemplate.Create(
+            userId,
             request.Title,
             request.Duration,
             request.Tags ?? [],
@@ -30,9 +31,9 @@ public sealed class RecurringTaskTemplateService(
         return ToDto(template);
     }
 
-    public async Task<RecurringTaskTemplateDto?> UpdateAsync(Guid id, UpdateRecurringTaskTemplateRequest request, CancellationToken ct = default)
+    public async Task<RecurringTaskTemplateDto?> UpdateAsync(Guid id, UpdateRecurringTaskTemplateRequest request, string userId, CancellationToken ct = default)
     {
-        var template = await repository.GetByIdAsync(id, ct);
+        var template = await repository.GetByIdForUserAsync(id, userId, ct);
         if (template is null) return null;
 
         template.Update(request.Title, request.Duration, request.Tags);
@@ -41,9 +42,9 @@ public sealed class RecurringTaskTemplateService(
         return ToDto(template);
     }
 
-    public async Task<bool> DeleteAsync(Guid id, CancellationToken ct = default)
+    public async Task<bool> DeleteAsync(Guid id, string userId, CancellationToken ct = default)
     {
-        var template = await repository.GetByIdAsync(id, ct);
+        var template = await repository.GetByIdForUserAsync(id, userId, ct);
         if (template is null) return false;
 
         template.Deactivate();
@@ -52,9 +53,9 @@ public sealed class RecurringTaskTemplateService(
         return true;
     }
 
-    public async Task<bool> ActivateAsync(Guid id, CancellationToken ct = default)
+    public async Task<bool> ActivateAsync(Guid id, string userId, CancellationToken ct = default)
     {
-        var template = await repository.GetByIdAsync(id, ct);
+        var template = await repository.GetByIdForUserAsync(id, userId, ct);
         if (template is null) return false;
 
         template.Activate();
@@ -72,8 +73,8 @@ public sealed class RecurringTaskTemplateService(
         processor.AdvanceAsync(id, ct);
 
     /// <summary>Advances all active templates of a given recurrence type to the next period.</summary>
-    public Task AdvanceAllByTypeAsync(RecurrenceType type, CancellationToken ct = default) =>
-        processor.AdvanceAllByTypeAsync(type, ct);
+    public Task AdvanceAllByTypeAsync(RecurrenceType type, string userId, CancellationToken ct = default) =>
+        processor.AdvanceAllByTypeAsync(type, userId, ct);
 
     private static RecurringTaskTemplateDto ToDto(RecurringTaskTemplate t) =>
         new(t.Id, t.Title, t.Duration, t.Tags, t.RecurrenceType, t.IsActive, t.CreatedAt);
