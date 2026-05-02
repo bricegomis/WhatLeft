@@ -77,9 +77,9 @@
     <!-- DRAWER -->
     <v-navigation-drawer
       v-model="drawer"
-      :location="$vuetify.display.mobile ? 'top' : 'left'"
       :temporary="$vuetify.display.mobile"
       :permanent="!$vuetify.display.mobile"
+      location="left"
       width="260"
       color="grey-darken-4"
       dark

@@ -81,7 +81,9 @@ public sealed class RecurringTaskProcessor(
         // Compute next period start
         var nextPeriodStart = template.RecurrenceType == RecurrenceType.Daily
             ? currentPeriodStart.AddDays(1)
-            : currentPeriodStart.AddDays(7);
+            : template.RecurrenceType == RecurrenceType.Monthly
+                ? currentPeriodStart.AddMonths(1)
+                : currentPeriodStart.AddDays(7);
 
         // Create one task for the next period
         var newTask = TaskItem.CreateFromTemplate(template, nextPeriodStart);
@@ -107,7 +109,9 @@ public sealed class RecurringTaskProcessor(
         // Cancel previous period's uncompleted instances
         var previousPeriodStart = template.RecurrenceType == RecurrenceType.Daily
             ? periodStart.AddDays(-1)
-            : periodStart.AddDays(-7);
+            : template.RecurrenceType == RecurrenceType.Monthly
+                ? periodStart.AddMonths(-1)
+                : periodStart.AddDays(-7);
 
         var unfinished = await taskRepo.GetUnfinishedByTemplateAndPeriodAsync(template.Id, previousPeriodStart, ct);
         foreach (var task in unfinished)

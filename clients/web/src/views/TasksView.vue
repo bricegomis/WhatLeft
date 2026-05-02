@@ -180,7 +180,7 @@
                 <v-tooltip :text="taskRecurrenceType(task) === 'Daily' ? 'Journalier' : 'Hebdomadaire'" location="start">
                   <template #activator="{ props }">
                     <v-icon v-bind="props" size="14" color="deep-purple-lighten-2">
-                      {{ taskRecurrenceType(task) === 'Daily' ? 'mdi-calendar-today' : 'mdi-calendar-week' }}
+                      {{ taskRecurrenceType(task) === 'Daily' ? 'mdi-calendar-today' : taskRecurrenceType(task) === 'Monthly' ? 'mdi-calendar-month' : 'mdi-calendar-week' }}
                     </v-icon>
                   </template>
                 </v-tooltip>
@@ -410,7 +410,7 @@ const { tasks, isLoading, hasError, error } = storeToRefs(tasksStore)
 const recurringStore = useRecurringStore()
 const { templates: recurringTemplates } = storeToRefs(recurringStore)
 
-function taskRecurrenceType(task: Task): 'Daily' | 'Weekly' | null {
+function taskRecurrenceType(task: Task): 'Daily' | 'Weekly' | 'Monthly' | null {
   if (!task.recurringTaskTemplateId) return null
   return recurringTemplates.value.find(t => t.id === task.recurringTaskTemplateId)?.recurrenceType ?? null
 }

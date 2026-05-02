@@ -48,7 +48,7 @@
             <v-list-item>
               <template #prepend>
                 <v-icon color="primary" class="mr-2">
-                  {{ tpl.recurrenceType === 'Daily' ? 'mdi-calendar-today' : 'mdi-calendar-week' }}
+                  {{ tpl.recurrenceType === 'Daily' ? 'mdi-calendar-today' : tpl.recurrenceType === 'Monthly' ? 'mdi-calendar-month' : 'mdi-calendar-week' }}
                 </v-icon>
               </template>
 
@@ -299,11 +299,12 @@ const form = ref(defaultForm())
 
 const recurrenceOptions = [
   { label: 'Hebdomadaire', value: 'Weekly' },
-  { label: 'Quotidienne', value: 'Daily' }
+  { label: 'Quotidienne', value: 'Daily' },
+  { label: 'Mensuelle', value: 'Monthly' }
 ]
 
 function recurrenceLabel(tpl: RecurringTaskTemplate) {
-  const type = tpl.recurrenceType === 'Weekly' ? 'semaine' : 'jour'
+  const type = tpl.recurrenceType === 'Weekly' ? 'semaine' : tpl.recurrenceType === 'Monthly' ? 'mois' : 'jour'
   return `1 fois par ${type} · ${tpl.duration} min`
 }
 

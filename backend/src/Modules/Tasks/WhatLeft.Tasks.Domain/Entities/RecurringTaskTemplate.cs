@@ -63,6 +63,7 @@ public sealed class RecurringTaskTemplate
         {
             RecurrenceType.Daily => new DateTimeOffset(now.UtcDateTime.Date, TimeSpan.Zero),
             RecurrenceType.Weekly => GetWeekStart(now),
+            RecurrenceType.Monthly => new DateTimeOffset(now.UtcDateTime.Year, now.UtcDateTime.Month, 1, 0, 0, 0, TimeSpan.Zero),
             _ => throw new InvalidOperationException($"Unknown recurrence type: {RecurrenceType}")
         };
     }

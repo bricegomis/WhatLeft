@@ -1,4 +1,4 @@
-﻿export type RecurrenceType = 'Daily' | 'Weekly'
+﻿export type RecurrenceType = 'Daily' | 'Weekly' | 'Monthly'
 
 export interface RecurringTaskTemplate {
   id: string
