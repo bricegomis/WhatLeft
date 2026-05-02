@@ -1,0 +1,42 @@
+{
+  "expo": {
+    "name": "WhatLeft",
+    "slug": "whatleft",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "scheme": "com.whatleft.app",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.whatleft.app",
+      "supportsTablet": false,
+      "infoPlist": {
+        "NSRemindersFullAccessUsageDescription": "WhatLeft synchronise vos tâches avec Apple Rappels."
+      }
+    },
+    "android": {
+      "package": "com.whatleft.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      }
+    },
+    "plugins": [
+      "expo-router",
+      "expo-secure-store",
+      [
+        "react-native-auth0",
+        {
+          "domain": "dev-frvj0skig142mzhh.eu.auth0.com"
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
