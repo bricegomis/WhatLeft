@@ -1,4 +1,6 @@
 ﻿using System.Text.Json.Serialization;
+using Hangfire;
+using Hangfire.PostgreSql;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Scalar.AspNetCore;
@@ -6,6 +8,7 @@ using WhatLeft.Api.Modules.Tasks;
 using WhatLeft.Api.OpenApi;
 using WhatLeft.Tasks.Application;
 using WhatLeft.Tasks.Infrastructure;
+using WhatLeft.Tasks.Infrastructure.Jobs;
 using WhatLeft.Tasks.Infrastructure.Persistence;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -40,6 +43,17 @@ builder.Services.AddCors(options =>
 builder.Services.AddTasksApplication();
 builder.Services.AddTasksInfrastructure(builder.Configuration);
 
+// ── Hangfire ──────────────────────────────────────────────────────────────────
+// Uses the same PostgreSQL DB as the Tasks module (dedicated "hangfire" schema).
+builder.Services.AddHangfire(config => config
+    .SetDataCompatibilityLevel(CompatibilityLevel.Version_180)
+    .UseSimpleAssemblyNameTypeSerializer()
+    .UseRecommendedSerializerSettings()
+    .UsePostgreSqlStorage(c =>
+        c.UseNpgsqlConnection(builder.Configuration.GetConnectionString("Tasks"))));
+
+builder.Services.AddHangfireServer();
+
 // ── OpenAPI (native .NET 10 + Scalar UI) ─────────────────────────────────────
 builder.Services.AddOpenApi(options =>
 {
@@ -70,7 +84,16 @@ if (app.Environment.IsDevelopment())
         })
         .WithPersistentAuthentication()
     );
+    // Hangfire dashboard: http://localhost:5000/hangfire (dev only)
+    app.MapHangfireDashboard("/hangfire");
 }
+
+// ── Hangfire recurring jobs ───────────────────────────────────────────────────
+var recurringJobs = app.Services.GetRequiredService<IRecurringJobManager>();
+recurringJobs.AddOrUpdate<RecurringTaskJob>(
+    RecurringTaskJob.JobId,
+    job => job.ProcessAsync(),
+    Cron.Daily()); // Chaque jour à 00:00 UTC — idempotent par période
 
 app.UseCors();
 app.UseAuthentication();
