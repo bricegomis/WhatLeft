@@ -5,28 +5,21 @@
       <!-- Left: Tasks Cards — masqué sur mobile -->
       <v-col cols="12" md="3" class="d-none d-md-flex flex-column">
         <!-- Filtre par tags -->
-        <v-autocomplete
-          v-model="filterTags"
-          :items="allCalendarTags"
-          label="Filtrer par tags"
-          multiple
-          density="compact"
-          variant="outlined"
-          hide-details
-          class="mb-1"
-          clearable
-          :hide-selected="true"
-        >
-          <template #selection />
-        </v-autocomplete>
-        <div v-if="filterTags.length" class="d-flex flex-wrap gap-1 mb-2">
-          <v-chip
-            v-for="tag in filterTags"
-            :key="tag"
-            size="x-small"
-            closable
-            @click:close="filterTags = filterTags.filter(t => t !== tag)"
-          >{{ tag }}</v-chip>
+        <div v-if="allCalendarTags.length" class="mb-2">
+          <v-autocomplete
+            v-model="filterTags"
+            :items="allCalendarTags"
+            label="Filtrer par tags"
+            multiple
+            chips
+            closable-chips
+            clearable
+            density="compact"
+            variant="outlined"
+            hide-details
+            prepend-inner-icon="mdi-tag-outline"
+            :menu-props="{ maxHeight: 200 }"
+          />
         </div>
         <div class="d-flex flex-column gap-3 task-list-container">
           <div v-if="filteredUnscheduledTasks.length === 0" class="text-center text-medium-emphasis pa-8">
