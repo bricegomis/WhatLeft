@@ -133,94 +133,17 @@
     <!-- Tasks List (style iOS Rappels) -->
     <v-card v-else-if="tasks.length > 0 && viewMode === 'cards'" class="mb-6" style="overflow:hidden;">
       <template v-for="(task, index) in filteredTasks" :key="task.id">
-        <div style="position:relative; overflow:hidden;">
-
-          <!-- Actions révélées au glissement gauche -->
-          <div style="position:absolute; right:0; top:0; bottom:0; display:flex; width:210px;">
-            <button
-              style="flex:1; background:#34c759; color:white; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"
-              @click="toggleFinish(task.id); closeSwipe(task.id)"
-            >
-              <v-icon size="20">mdi-check</v-icon>
-              <span style="font-size:10px;">Terminer</span>
-            </button>
-            <button
-              style="flex:1; background:#ff9500; color:white; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"
-              @click="scheduleTonight(task.id)"
-            >
-              <v-icon size="20">mdi-weather-sunset</v-icon>
-              <span style="font-size:10px;">Ce soir</span>
-            </button>
-            <button
-              style="flex:1; background:#007aff; color:white; border:none; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:2px;"
-              @click="scheduleTomorrowMorning(task.id)"
-            >
-              <v-icon size="20">mdi-weather-sunrise</v-icon>
-              <span style="font-size:10px;">Demain</span>
-            </button>
-          </div>
-
-          <!-- Contenu principal (glisse à gauche) -->
-          <div
-            class="d-flex align-center px-4 py-3"
-            :style="{
-              background: 'white',
-              position: 'relative',
-              zIndex: 1,
-              transform: `translateX(${getSwipeOffset(task.id)}px)`,
-              transition: isSwipeDragging(task.id) ? 'none' : 'transform 0.25s ease',
-            }"
-            @touchstart="onTouchStart(task.id, $event)"
-            @touchmove="onTouchMove(task.id, $event)"
-            @touchend="onTouchEnd(task.id, $event)"
-            @click="getSwipeOffset(task.id) !== 0 ? closeSwipe(task.id) : openEditDialog(task)"
-          >
-            <!-- Cercle checkbox -->
-            <v-btn
-              :icon="task.finishAt ? 'mdi-check-circle' : 'mdi-circle-outline'"
-              :color="task.finishAt ? 'success' : 'grey-lighten-1'"
-              variant="plain"
-              size="small"
-              @click.stop="toggleFinish(task.id)"
-              :disabled="isLoading"
-              class="mr-3 flex-shrink-0"
-            />
-
-            <!-- Texte -->
-            <div class="flex-grow-1" style="min-width:0; position:relative;">
-              <span style="position:absolute; top:0; right:0; font-size:10px; color:#999; white-space:nowrap;">{{ task.duration }} min</span>
-              <div :class="['text-body-1', { 'text-decoration-line-through text-medium-emphasis': task.finishAt }]">
-                {{ task.title }}
-              </div>
-              <div v-if="task.startAt || task.tags.length" class="d-flex align-center flex-wrap gap-1 mt-1">
-                <span v-if="task.startAt" class="text-caption text-primary d-flex align-center ga-1">
-                  <v-icon size="12">mdi-clock-outline</v-icon>{{ formatDateTime(task.startAt) }}
-                </span>
-                <v-chip v-for="tag in task.tags" :key="tag" size="x-small" variant="tonal" color="primary">{{ tag }}</v-chip>
-              </div>
-              <div v-if="taskRecurrenceType(task)" style="position:absolute; bottom:0; right:0;">
-                <v-tooltip :text="taskRecurrenceType(task) === 'Daily' ? 'Journalier' : 'Hebdomadaire'" location="start">
-                  <template #activator="{ props }">
-                    <v-icon v-bind="props" size="14" color="deep-purple-lighten-2">
-                      {{ taskRecurrenceType(task) === 'Daily' ? 'mdi-calendar-today' : taskRecurrenceType(task) === 'Monthly' ? 'mdi-calendar-month' : 'mdi-calendar-week' }}
-                    </v-icon>
-                  </template>
-                </v-tooltip>
-              </div>
-            </div>
-
-            <!-- Bouton supprimer (desktop uniquement, sur hover) -->
-            <v-btn
-              class="d-none d-sm-flex flex-shrink-0 ml-2"
-              icon="mdi-delete-outline"
-              variant="plain"
-              color="grey"
-              size="small"
-              @click.stop="removeTask(task.id)"
-              :disabled="isLoading"
-            />
-          </div>
-        </div>
+        <TaskCard
+          :task="task"
+          :recurrence-type="taskRecurrenceType(task)"
+          :swipeable="true"
+          :disabled="isLoading"
+          @click="openEditDialog(task)"
+          @toggle-finish="toggleFinish(task.id)"
+          @schedule-tonight="scheduleTonight(task.id)"
+          @schedule-tomorrow="scheduleTomorrowMorning(task.id)"
+          @delete="removeTask(task.id)"
+        />
         <v-divider v-if="index < filteredTasks.length - 1" />
       </template>
     </v-card>
@@ -425,13 +348,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch, reactive } from 'vue'
+import { ref, computed, onMounted, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useDisplay } from 'vuetify'
 import { storeToRefs } from 'pinia'
 import { useTasksStore } from '../stores/tasks'
 import { useRecurringStore } from '../stores/recurring'
 import AdminLayout from '../layouts/AdminLayout.vue'
+import TaskCard from '../components/TaskCard.vue'
 import type { Task } from '../stores/tasks'
 
 const tasksStore = useTasksStore()
@@ -457,7 +381,6 @@ const editTags = ref<string[]>([])
 const isSavingEdit = ref(false)
 
 function openEditDialog(task: Task) {
-  if (getSwipeOffset(task.id) !== 0) { closeSwipe(task.id); return }
   editingTask.value = task
   editTitle.value = task.title
   editDuration.value = task.duration
@@ -512,74 +435,14 @@ const viewMode = ref<'table' | 'cards'>(
 )
 watch(viewMode, (v) => localStorage.setItem(STORAGE_KEY, v))
 
-// ── Swipe (vue liste) ───────────────────────────────────────────────────────
-const ACTION_WIDTH = 210
-interface SwipeItem {
-  offset: number; startX: number; startY: number
-  baseOffset: number; dragging: boolean; lockAxis: 'h' | 'v' | null
-}
-const swipeMap = reactive<Record<string, SwipeItem>>({})
-
-function ensureSwipe(id: string): SwipeItem {
-  if (!swipeMap[id]) swipeMap[id] = { offset: 0, startX: 0, startY: 0, baseOffset: 0, dragging: false, lockAxis: null }
-  return swipeMap[id]
-}
-function getSwipeOffset(id: string) { return swipeMap[id]?.offset ?? 0 }
-function isSwipeDragging(id: string) { return swipeMap[id]?.dragging ?? false }
-
-function onTouchStart(taskId: string, e: TouchEvent) {
-  for (const id in swipeMap) { if (id !== taskId) swipeMap[id].offset = 0 }
-  const s = ensureSwipe(taskId)
-  s.startX = e.touches[0].clientX; s.startY = e.touches[0].clientY
-  s.baseOffset = s.offset; s.dragging = true; s.lockAxis = null
-}
-function onTouchMove(taskId: string, e: TouchEvent) {
-  const s = swipeMap[taskId]
-  if (!s?.dragging) return
-  const dx = e.touches[0].clientX - s.startX
-  const dy = e.touches[0].clientY - s.startY
-  if (s.lockAxis === null) {
-    if (Math.abs(dx) > 8 || Math.abs(dy) > 8) s.lockAxis = Math.abs(dx) >= Math.abs(dy) ? 'h' : 'v'
-    return
-  }
-  if (s.lockAxis === 'h') {
-    e.preventDefault()
-    s.offset = Math.max(-ACTION_WIDTH, Math.min(0, s.baseOffset + dx))
-  }
-}
-function onTouchEnd(taskId: string, e: TouchEvent) {
-  const s = swipeMap[taskId]
-  if (!s) return
-  if (s.lockAxis === 'h') {
-    const dx = e.changedTouches[0].clientX - s.startX
-    if (dx < -60) s.offset = -ACTION_WIDTH
-    else if (dx > 30) s.offset = 0
-    else s.offset = s.baseOffset
-  }
-  s.dragging = false; s.lockAxis = null
-}
-function closeSwipe(taskId: string) { if (swipeMap[taskId]) swipeMap[taskId].offset = 0 }
-
 // ── Actions rapides ──────────────────────────────────────────────────────────
 function scheduleTonight(taskId: string) {
   const d = new Date(); d.setHours(19, 0, 0, 0)
   tasksStore.updateTask(taskId, { startAt: d.toISOString() })
-  closeSwipe(taskId)
 }
 function scheduleTomorrowMorning(taskId: string) {
   const d = new Date(); d.setDate(d.getDate() + 1); d.setHours(8, 0, 0, 0)
   tasksStore.updateTask(taskId, { startAt: d.toISOString() })
-  closeSwipe(taskId)
-}
-
-function formatDateTime(dateString: string) {
-  const date = new Date(dateString)
-  const today = new Date()
-  const tomorrow = new Date(today); tomorrow.setDate(today.getDate() + 1)
-  const time = date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  if (date.toDateString() === today.toDateString()) return `Aujourd'hui à ${time}`
-  if (date.toDateString() === tomorrow.toDateString()) return `Demain à ${time}`
-  return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' }) + ` à ${time}`
 }
 
 const isModalOpen = ref(false)

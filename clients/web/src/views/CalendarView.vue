@@ -27,53 +27,16 @@
             <p class="text-caption">{{ filterTags.length ? '' : 'Toutes les tâches sont planifiées ou créez une nouvelle tâche' }}</p>
             <v-btn v-if="filterTags.length" variant="text" size="small" @click="filterTags = []">Réinitialiser</v-btn>
           </div>
-          <!-- @dragstart="handleDragStart($event, task)"
-            @dragend="handleDragEnd" -->
-          <v-card
+          <!-- @dragstart et @dragend gérés par FullCalendar Draggable -->
+          <TaskCard
             v-for="task in filteredUnscheduledTasks"
             :key="task.id"
-            class="draggable-task fc-event"
-            :data-event-id="task.id"
-            :data-duration="task.duration"
-            :style="{ 
-              minHeight: `${task.duration >= 4 ? 100 : 80}px`,
-              background: getTaskBackground(task)
-            }"
-            :class="{ completed: task.finishAt }"
-          >
-            <v-card-text class="d-flex flex-column justify-space-between h-100 pa-3 position-relative">
-              <!-- Title and Duration Row -->
-              <div class="d-flex justify-space-between align-start gap-2">
-                <h4 class="text-body-2 font-weight-bold text-white flex-grow-1" :class="{ 'text-decoration-line-through': task.finishAt }">
-                  {{ task.title }}
-                </h4>
-                <span class="text-caption text-white font-weight-bold flex-shrink-0">
-                  {{ task.duration }} min
-                </span>
-              </div>
-              
-              <!-- Time info -->
-              <div class="text-caption text-white-50 mt-1">
-                <p class="mb-0">{{ getTaskTimeRange(task) }}</p>
-              </div>
-              
-              <!-- Tags Row -->
-              <div class="d-flex flex-wrap gap-1 mt-2">
-                <v-chip
-                  v-for="(tag, index) in getTaskTags(task)"
-                  :key="index"
-                  size="x-small"
-                  variant="outlined"
-                  class="tag-chip"
-                >
-                  {{ tag }}
-                </v-chip>
-                <span v-if="getTaskTags(task).length === 0" class="text-caption text-white-50 align-self-center">
-                  Pas de tags
-                </span>
-              </div>
-            </v-card-text>
-          </v-card>
+            :task="task"
+            :draggable="true"
+            @toggle-finish="tasksStore.toggleFinish(task.id)"
+            @delete="tasksStore.removeTask(task.id)"
+            @click="openEditDialog(task)"
+          />
         </div>
       </v-col>
 
@@ -139,7 +102,9 @@ import interactionPlugin from '@fullcalendar/interaction'
 import { Draggable } from '@fullcalendar/interaction'
 import VueCalendar from '@fullcalendar/vue3'
 import { useTasksStore } from '../stores/tasks'
+import type { Task } from '../stores/tasks'
 import AdminLayout from '../layouts/AdminLayout.vue'
+import TaskCard from '../components/TaskCard.vue'
 
 interface SelectedEvent {
   id: string
@@ -227,13 +192,15 @@ const handleEventDrop = async (info: any) => {
 
 const handleEventClick = (info: any) => {
   const task = tasksStore.tasks.find(t => t.id === info.event.id)
-  if (task) {
-    selectedEvent.id = task.id
-    selectedEvent.title = task.title
-    selectedEvent.start = task.startAt || ''
-    selectedEvent.finishAt = task.finishAt || ''
-    showEventModal.value = true
-  }
+  if (task) openEditDialog(task)
+}
+
+const openEditDialog = (task: Task) => {
+  selectedEvent.id = task.id
+  selectedEvent.title = task.title
+  selectedEvent.start = task.startAt || ''
+  selectedEvent.finishAt = task.finishAt || ''
+  showEventModal.value = true
 }
 
 const updateEvent = async () => {
@@ -248,41 +215,6 @@ const updateEvent = async () => {
     console.error('Erreur lors de la mise à jour:', error)
   }
 }
-
-const getTaskTags = (task: any) => {
-  return task.tags || []
-}
-
-const getTaskBackground = (task: any) => {
-  // Gradient based on duration
-  if (task.finishAt) {
-    return 'linear-gradient(135deg, #4caf50 0%, #45a049 100%)'
-  }
-  
-  // Color intensity based on duration
-  if (task.duration >= 8) {
-    return 'linear-gradient(135deg, #ff5252 0%, #ff1744 100%)'
-  } else if (task.duration >= 4) {
-    return 'linear-gradient(135deg, #ff9800 0%, #f57c00 100%)'
-  } else {
-    return 'linear-gradient(135deg, #4f46e5 0%, #4338ca 100%)'
-  }
-}
-
-const getTaskTimeRange = (task: any) => {
-  if (!task.startAt) return 'Non planifiée'
-  
-  const startTime = new Date(task.startAt)
-  const endTime = new Date(startTime.getTime() + task.duration * 60 * 60 * 1000)
-  
-  const dateStr = startTime.toLocaleDateString('fr-FR', { month: 'short', day: 'numeric' })
-  const startStr = startTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  const endStr = endTime.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' })
-  
-  return `${dateStr} • ${startStr} - ${endStr}`
-}
-
-// Drag & drop is now handled by FullCalendar's Draggable
 
 
 onMounted(async () => {
@@ -344,59 +276,7 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.draggable-task {
-  cursor: grab;
-  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  border: none;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
-  border-radius: 12px;
-  overflow: hidden;
-  position: relative;
-  user-select: none;
-}
-
-.draggable-task:hover {
-  cursor: grab;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.25);
-  transform: translateY(-4px);
-}
-
-.draggable-task:active {
-  cursor: grabbing;
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
-  transform: translateY(-6px);
-}
-
-.draggable-task.completed {
-  opacity: 0.85;
-}
-
-.draggable-task .task-actions {
-  display: flex;
-  gap: 4px;
-  margin-top: 8px;
-  opacity: 0.8;
-  transition: opacity 0.2s ease;
-  align-self: flex-end;
-}
-
-.draggable-task:hover .task-actions {
-  opacity: 1;
-}
-
-.tag-chip {
-  border-color: rgba(255, 255, 255, 0.5) !important;
-  color: white !important;
-  font-weight: 500;
-  height: 20px !important;
-}
-
-.tag-chip :deep(.v-chip__content) {
-  font-size: 0.75rem !important;
-  padding: 0 6px !important;
-}
-
-.position-relative {
-  position: relative;
+.task-list-container {
+  overflow-y: auto;
 }
 </style>
