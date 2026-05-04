@@ -4,15 +4,40 @@
     <v-row class="mb-6">
       <!-- Left: Tasks Cards — masqué sur mobile -->
       <v-col cols="12" md="3" class="d-none d-md-flex flex-column">
+        <!-- Filtre par tags -->
+        <v-autocomplete
+          v-model="filterTags"
+          :items="allCalendarTags"
+          label="Filtrer par tags"
+          multiple
+          density="compact"
+          variant="outlined"
+          hide-details
+          class="mb-1"
+          clearable
+          :hide-selected="true"
+        >
+          <template #selection />
+        </v-autocomplete>
+        <div v-if="filterTags.length" class="d-flex flex-wrap gap-1 mb-2">
+          <v-chip
+            v-for="tag in filterTags"
+            :key="tag"
+            size="x-small"
+            closable
+            @click:close="filterTags = filterTags.filter(t => t !== tag)"
+          >{{ tag }}</v-chip>
+        </div>
         <div class="d-flex flex-column gap-3 task-list-container">
-          <div v-if="tasksStore.unscheduledTasks.length === 0" class="text-center text-medium-emphasis pa-8">
-            <p class="text-body-2">Aucune tâche</p>
-            <p class="text-caption">Toutes les tâches sont planifiées ou créez une nouvelle tâche</p>
+          <div v-if="filteredUnscheduledTasks.length === 0" class="text-center text-medium-emphasis pa-8">
+            <p class="text-body-2">{{ filterTags.length ? 'Aucune tâche pour ces tags' : 'Aucune tâche' }}</p>
+            <p class="text-caption">{{ filterTags.length ? '' : 'Toutes les tâches sont planifiées ou créez une nouvelle tâche' }}</p>
+            <v-btn v-if="filterTags.length" variant="text" size="small" @click="filterTags = []">Réinitialiser</v-btn>
           </div>
           <!-- @dragstart="handleDragStart($event, task)"
             @dragend="handleDragEnd" -->
           <v-card
-            v-for="task in tasksStore.unscheduledTasks"
+            v-for="task in filteredUnscheduledTasks"
             :key="task.id"
             class="draggable-task fc-event"
             :data-event-id="task.id"
@@ -134,6 +159,18 @@ const tasksStore = useTasksStore()
 const { mobile } = useDisplay()
 const calendarRef = ref()
 const showEventModal = ref(false)
+const filterTags = ref<string[]>([])
+
+const allCalendarTags = computed(() =>
+  [...new Set(tasksStore.unscheduledTasks.flatMap(t => t.tags))].sort()
+)
+
+const filteredUnscheduledTasks = computed(() => {
+  if (filterTags.value.length === 0) return tasksStore.unscheduledTasks
+  return tasksStore.unscheduledTasks.filter(t =>
+    filterTags.value.every(tag => t.tags.includes(tag))
+  )
+})
 const selectedEvent = reactive<SelectedEvent>({
   id: '',
   title: '',
