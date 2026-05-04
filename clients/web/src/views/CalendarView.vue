@@ -179,13 +179,13 @@ const calendarOptions = computed(() => ({
     console.log('Event dropped:', info)
   },
   eventReceive: (info: any) => {
-    const draggedEl = info.draggedEl
-    const taskId = draggedEl?.getAttribute('data-event-id')
+    const taskId = info.event.id
     const newStartAt = info.event.start?.toISOString()
-    
+
     if (taskId && newStartAt) {
       tasksStore.updateTask(taskId, { startAt: newStartAt })
-      console.log(`Tâche ${taskId} planifiée au ${newStartAt}`)
+    } else {
+      info.event.remove()
     }
   }
 }))
@@ -311,6 +311,7 @@ onMounted(async () => {
         const title = eventEl.textContent?.split('\n')[0]?.trim() || 'Tâche'
         
         return {
+          id: taskId ?? undefined,
           title: title,
           duration: `PT${durationHours}H` // ISO 8601 format
         }
