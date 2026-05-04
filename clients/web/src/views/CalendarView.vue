@@ -113,7 +113,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive, onMounted, nextTick, watch } from 'vue'
+import { ref, computed, reactive, onMounted, nextTick } from 'vue'
 import { useDisplay } from 'vuetify'
 import dayGridPlugin from '@fullcalendar/daygrid'
 import timeGridPlugin from '@fullcalendar/timegrid'
@@ -148,26 +148,19 @@ const calendarOptions = computed(() => ({
   editable: true,
   droppable: true,
   height: mobile.value ? 600 : 'auto',
-  events: (_info: any, successCallback: any) => {
-    successCallback(
-      tasksStore.scheduledTasks.map(task => {
-        const startDate = new Date(task.startAt as string)
-        const endDate = new Date(startDate.getTime() + task.duration * 60 * 1000)
-        return {
-          id: task.id,
-          title: task.title,
-          start: task.startAt as string,
-          end: endDate.toISOString(),
-          extendedProps: {
-            finishAt: task.finishAt,
-            duration: task.duration
-          },
-          backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
-          borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
-        }
-      })
-    )
-  },
+  events: tasksStore.scheduledTasks.map(task => {
+    const startDate = new Date(task.startAt as string)
+    const endDate = new Date(startDate.getTime() + task.duration * 60 * 1000)
+    return {
+      id: task.id,
+      title: task.title,
+      start: task.startAt as string,
+      end: endDate.toISOString(),
+      extendedProps: { finishAt: task.finishAt, duration: task.duration },
+      backgroundColor: task.finishAt ? '#4caf50' : '#4f46e5',
+      borderColor: task.finishAt ? '#4caf50' : '#4f46e5'
+    }
+  }),
   headerToolbar: {
       left: 'prev,next today',
       center: mobile.value ? '' : 'title',
@@ -181,12 +174,9 @@ const calendarOptions = computed(() => ({
   eventReceive: (info: any) => {
     const taskId = info.event.id
     const newStartAt = info.event.start?.toISOString()
-
-    // Supprimer l'événement local ajouté par FullCalendar :
-    // le watch sur scheduledTasks va déclencher refetchEvents qui le recharge proprement.
-    // Sans ce remove(), on obtient un doublon (local + rechargé depuis le store).
+    // Retirer l'événement local de FC : le store va se mettre à jour,
+    // calendarOptions recalcule, et FC affiche l'événement depuis le store.
     info.event.remove()
-
     if (taskId && newStartAt) {
       tasksStore.updateTask(taskId, { startAt: newStartAt })
     }
@@ -264,15 +254,6 @@ const getTaskTimeRange = (task: any) => {
 
 // Drag & drop is now handled by FullCalendar's Draggable
 
-// Sync calendar when tasks change (function source needs explicit refetch)
-watch(
-  () => tasksStore.scheduledTasks,
-  async () => {
-    await nextTick()
-    calendarRef.value?.getApi()?.refetchEvents()
-  },
-  { deep: true }
-)
 
 onMounted(async () => {
   // Charger les tâches en premier
