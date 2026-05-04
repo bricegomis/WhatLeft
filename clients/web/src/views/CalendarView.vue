@@ -182,10 +182,13 @@ const calendarOptions = computed(() => ({
     const taskId = info.event.id
     const newStartAt = info.event.start?.toISOString()
 
+    // Supprimer l'événement local ajouté par FullCalendar :
+    // le watch sur scheduledTasks va déclencher refetchEvents qui le recharge proprement.
+    // Sans ce remove(), on obtient un doublon (local + rechargé depuis le store).
+    info.event.remove()
+
     if (taskId && newStartAt) {
       tasksStore.updateTask(taskId, { startAt: newStartAt })
-    } else {
-      info.event.remove()
     }
   }
 }))
