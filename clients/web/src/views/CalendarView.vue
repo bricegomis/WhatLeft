@@ -4,9 +4,19 @@
     <v-row class="mb-6">
       <!-- Left: Tasks Cards — masqué sur mobile -->
       <v-col cols="12" md="3" class="d-none d-md-flex flex-column">
-        <!-- Filtre par tags -->
-        <div v-if="allCalendarTags.length" class="mb-2">
+        <!-- Filtres -->
+        <div class="mb-2 d-flex flex-column gap-2">
+          <v-text-field
+            v-model="searchText"
+            label="Rechercher"
+            clearable
+            density="compact"
+            variant="outlined"
+            hide-details
+            prepend-inner-icon="mdi-magnify"
+          />
           <v-autocomplete
+            v-if="allCalendarTags.length"
             v-model="filterTags"
             :items="allCalendarTags"
             label="Filtrer par tags"
@@ -23,9 +33,9 @@
         </div>
         <div class="d-flex flex-column gap-3 task-list-container">
           <div v-if="filteredUnscheduledTasks.length === 0" class="text-center text-medium-emphasis pa-8">
-            <p class="text-body-2">{{ filterTags.length ? 'Aucune tâche pour ces tags' : 'Aucune tâche' }}</p>
-            <p class="text-caption">{{ filterTags.length ? '' : 'Toutes les tâches sont planifiées ou créez une nouvelle tâche' }}</p>
-            <v-btn v-if="filterTags.length" variant="text" size="small" @click="filterTags = []">Réinitialiser</v-btn>
+            <p class="text-body-2">{{ filterTags.length || searchText ? 'Aucune tâche trouvée' : 'Aucune tâche' }}</p>
+            <p class="text-caption">{{ filterTags.length || searchText ? '' : 'Toutes les tâches sont planifiées ou créez une nouvelle tâche' }}</p>
+            <v-btn v-if="filterTags.length || searchText" variant="text" size="small" @click="filterTags = []; searchText = ''">Réinitialiser</v-btn>
           </div>
           <!-- @dragstart et @dragend gérés par FullCalendar Draggable -->
           <TaskCard
@@ -118,16 +128,22 @@ const { mobile } = useDisplay()
 const calendarRef = ref()
 const showEventModal = ref(false)
 const filterTags = ref<string[]>([])
+const searchText = ref('')
 
 const allCalendarTags = computed(() =>
   [...new Set(tasksStore.unscheduledTasks.flatMap(t => t.tags))].sort()
 )
 
 const filteredUnscheduledTasks = computed(() => {
-  if (filterTags.value.length === 0) return tasksStore.unscheduledTasks
-  return tasksStore.unscheduledTasks.filter(t =>
-    filterTags.value.every(tag => t.tags.includes(tag))
-  )
+  let result = tasksStore.unscheduledTasks
+  if (searchText.value.trim()) {
+    const q = searchText.value.trim().toLowerCase()
+    result = result.filter(t => t.title.toLowerCase().includes(q))
+  }
+  if (filterTags.value.length > 0) {
+    result = result.filter(t => filterTags.value.every(tag => t.tags.includes(tag)))
+  }
+  return result
 })
 const selectedEvent = reactive<SelectedEvent>({
   id: '',

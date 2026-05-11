@@ -28,8 +28,19 @@
       </v-btn>
     </v-alert>
 
-    <!-- Filtres tags -->
+    <!-- Filtres -->
     <v-row v-if="tasks.length > 0" class="mb-2" dense align="center">
+      <v-col cols="12" sm="4">
+        <v-text-field
+          v-model="searchText"
+          label="Rechercher"
+          clearable
+          density="compact"
+          variant="outlined"
+          hide-details
+          prepend-inner-icon="mdi-magnify"
+        />
+      </v-col>
       <v-col cols="12" sm>
         <v-autocomplete
           v-model="filterTags"
@@ -45,8 +56,8 @@
           prepend-inner-icon="mdi-tag-outline"
         />
       </v-col>
-      <v-col v-if="filterTags.length > 0" cols="auto">
-        <v-btn variant="text" size="small" color="primary" @click="filterTags = []">Réinitialiser</v-btn>
+      <v-col v-if="filterTags.length > 0 || searchText" cols="auto">
+        <v-btn variant="text" size="small" color="primary" @click="filterTags = []; searchText = ''">Réinitialiser</v-btn>
       </v-col>
     </v-row>
 
@@ -150,11 +161,11 @@
 
     <!-- Empty State -->
     <v-card v-else class="text-center pa-12">
-      <template v-if="filterTags.length > 0">
-        <v-icon color="grey" size="64" class="mb-4">mdi-tag-off-outline</v-icon>
-        <h2 class="text-h6 mb-2">Aucune tâche pour ces tags</h2>
-        <p class="text-body-2 text-medium-emphasis mb-6">Essayez d'autres tags ou réinitialisez le filtre.</p>
-        <v-btn variant="tonal" color="primary" @click="filterTags = []">Réinitialiser</v-btn>
+      <template v-if="filterTags.length > 0 || searchText">
+        <v-icon color="grey" size="64" class="mb-4">mdi-magnify-remove-outline</v-icon>
+        <h2 class="text-h6 mb-2">Aucune tâche trouvée</h2>
+        <p class="text-body-2 text-medium-emphasis mb-6">Essayez d'autres critères ou réinitialisez les filtres.</p>
+        <v-btn variant="tonal" color="primary" @click="filterTags = []; searchText = ''">Réinitialiser</v-btn>
       </template>
       <template v-else>
         <v-icon color="primary" size="64" class="mb-4">mdi-checkbox-marked-outline</v-icon>
@@ -462,10 +473,18 @@ const allExistingTags = computed(() => {
 })
 
 const filterTags = ref<string[]>([])
+const searchText = ref('')
 
 const filteredTasks = computed(() => {
-  if (filterTags.value.length === 0) return tasks.value
-  return tasks.value.filter(t => filterTags.value.every(tag => t.tags.includes(tag)))
+  let result = tasks.value
+  if (searchText.value.trim()) {
+    const q = searchText.value.trim().toLowerCase()
+    result = result.filter(t => t.title.toLowerCase().includes(q))
+  }
+  if (filterTags.value.length > 0) {
+    result = result.filter(t => filterTags.value.every(tag => t.tags.includes(tag)))
+  }
+  return result
 })
 
 const tableHeaders = [
